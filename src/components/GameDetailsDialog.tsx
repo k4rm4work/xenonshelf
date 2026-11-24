@@ -134,7 +134,7 @@ function Details({ game }: { game: Game }) {
               onClick={async () => {
                 if (await copyText(searchTitle(game.title))) toast({ kicker: t('toast.titleCopied'), title: game.title });
               }}
-              className="cursor-copy rounded-md text-left transition-colors hover:text-slate-950 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-x360"
+              className="cursor-pointer rounded-md text-left transition-colors hover:text-slate-950 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-x360"
             >
               {game.title}
             </button>

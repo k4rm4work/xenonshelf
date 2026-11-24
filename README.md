@@ -2,6 +2,10 @@
 
 Your Xbox 360 collection and wishlist, in the style of the console's dashboard.
 
+**[See it on the website →](https://k4rm4work.github.io/xenonshelf/)**
+
+![XenonShelf showing a collection of games as Xbox 360 cases with their covers](docs/app.webp)
+
 XenonShelf runs on a computer or NAS in your home and opens in any browser on your network:
 on your PC, your phone or your tablet. Add games by searching for them (covers and details come
 from IGDB) or import a whole list at once, mark what you have played, note editions, SteelBooks

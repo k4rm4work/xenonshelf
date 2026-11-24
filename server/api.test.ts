@@ -141,6 +141,12 @@ describe('import endpoints', () => {
     expect((await match({ titles: Array(26).fill('Halo 3') })).status).toBe(400);
   });
 
+  it('uses GET for search and game details', async () => {
+    expect((await fetch(`${base}/api/igdb/search?q=Halo`, { method: 'POST' })).status).toBe(405);
+    expect((await fetch(`${base}/api/igdb/game?id=1`, { method: 'POST' })).status).toBe(405);
+    expect((await fetch(`${base}/api/igdb/games?ids=1`, { method: 'POST' })).status).toBe(405);
+  });
+
   it('wants whole positive ids for game details', async () => {
     expect((await fetch(`${base}/api/igdb/games?ids=`)).status).toBe(400);
     expect((await fetch(`${base}/api/igdb/games?ids=1,x`)).status).toBe(400);

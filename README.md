@@ -92,7 +92,9 @@ Without keys the app still works: you add games by typing their title, with a st
 
 ## Updating
 
-When a new version is out, the app shows a notice. To update, run in the same folder:
+Once a day the server asks GitHub whether a new version is out, and the settings panel says so
+under the version number. Nothing about you or your collection is sent; you can turn the check
+off under **Settings → Server**. To update, run in the same folder:
 
 ```bash
 docker compose pull && docker compose up -d

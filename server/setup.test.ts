@@ -12,17 +12,26 @@ const dirs: string[] = [];
 afterEach(() => dirs.splice(0).forEach((d) => rmSync(d, { recursive: true, force: true })));
 
 /** What a setup route answers: its status, or the reason it refused. */
-type Reply = { firstRun?: boolean; igdb?: string; login?: string; user?: string; error?: string };
+type Reply = {
+  firstRun?: boolean;
+  igdb?: string;
+  login?: string;
+  user?: string;
+  updateCheck?: boolean;
+  newRelease?: { version: string; url: string };
+  error?: string;
+};
 type Call = (method: string, route: string, body?: unknown) => Promise<{ status: number; body: Reply }>;
 
 async function withSetup(
   env: Record<string, string>,
   run: (call: Call, configFile: string, setup: ReturnType<typeof createSetup>) => Promise<void>,
+  releases?: Parameters<typeof createSetup>[0]['releases'],
 ) {
   const dir = mkdtempSync(path.join(tmpdir(), 'xs-setup-'));
   dirs.push(dir);
   const configFile = path.join(dir, 'config.json');
-  const setup = createSetup({ configFile, env });
+  const setup = createSetup({ configFile, env, releases });
   const server = createServer(async (req, res) => {
     if (!(await setup.handle(req, res))) res.end('other');
   });
@@ -57,7 +66,7 @@ describe('server setup from the app', () => {
 
   it('guides a fresh server, and stops once done', async () => {
     await withSetup({}, async (call) => {
-      expect((await call('GET', '/api/setup')).body).toEqual({ firstRun: true, igdb: 'none', login: 'none' });
+      expect((await call('GET', '/api/setup')).body).toEqual({ firstRun: true, igdb: 'none', login: 'none', updateCheck: true });
       expect((await call('POST', '/api/setup/done')).body.firstRun).toBe(false);
     });
   });
@@ -97,11 +106,55 @@ describe('server setup from the app', () => {
       XENONSHELF_PASSWORD: 'correct-horse-battery',
     };
     await withSetup(env, async (call, _file, setup) => {
-      expect((await call('GET', '/api/setup')).body).toEqual({ firstRun: false, igdb: 'env', login: 'env', user: 'shelf' });
+      expect((await call('GET', '/api/setup')).body).toEqual({
+        firstRun: false,
+        igdb: 'env',
+        login: 'env',
+        user: 'shelf',
+        updateCheck: true,
+      });
       expect((await call('PUT', '/api/setup/igdb', { clientId: 'good-id', clientSecret: 's' })).status).toBe(409);
       expect((await call('DELETE', '/api/setup/login')).status).toBe(409);
       expect(setup.igdbEnv().clientId).toBe('env-id');
     });
+  });
+
+  it('tells about a newer release, and stops asking once the check is turned off', async () => {
+    const release = { version: '9.9.9', url: 'https://github.com/k4rm4work/xenonshelf/releases/tag/v9.9.9' };
+    let found: typeof release | undefined;
+    let checks = 0;
+    let on: () => boolean = () => true;
+    const releases = {
+      check: async () => {
+        checks++;
+        found = release;
+      },
+      newRelease: () => (on() ? found : undefined),
+    };
+    await withSetup(
+      {},
+      async (call, configFile, setup) => {
+        on = setup.updateCheck;
+        found = release;
+        expect((await call('GET', '/api/setup')).body).toMatchObject({ updateCheck: true, newRelease: release });
+
+        const off = await call('PUT', '/api/setup/updates', { on: false });
+        expect(off.body.updateCheck).toBe(false);
+        expect(off.body.newRelease).toBeUndefined();
+        expect(JSON.parse(readFileSync(configFile, 'utf8')).updateCheck).toBe(false);
+        expect(createSetup({ configFile, env: {} }).updateCheck()).toBe(false);
+
+        found = undefined;
+        const back = await call('PUT', '/api/setup/updates', { on: true });
+        expect(checks).toBe(1);
+        expect(back.body).toMatchObject({ updateCheck: true, newRelease: release });
+        // On is the default, so nothing about it stays in the file.
+        expect(JSON.parse(readFileSync(configFile, 'utf8'))).not.toHaveProperty('updateCheck');
+
+        expect((await call('PUT', '/api/setup/updates', { on: 'yes' })).status).toBe(400);
+      },
+      releases,
+    );
   });
 
   it('preserves concurrent changes to separate config sections', async () => {

@@ -111,6 +111,14 @@ export const ptBR: Record<MessageKey, string> = {
   'theme.dark': 'escuro',
   'settings.build': 'compilado em {date}',
   'settings.author': 'Feito por {author}',
+  'settings.newRelease': 'Saiu a versão {version}',
+  'settings.newReleaseNotes': 'novidades',
+  'settings.newReleaseHow': 'como atualizar',
+  'setup.updatesTitle': 'novas versões',
+  'setup.updatesIntro':
+    'Uma vez por dia o servidor pergunta ao GitHub se saiu um XenonShelf mais novo, e o painel de configurações avisa abaixo da versão. Nada sobre você ou sua coleção é enviado.',
+  'setup.updatesOn': 'verificar',
+  'setup.updatesOff': 'não verificar',
   'settings.data': 'Biblioteca',
   'settings.exportCsv': 'Planilha (CSV)',
   'settings.backup': 'Backup (JSON)',
@@ -127,7 +135,7 @@ export const ptBR: Record<MessageKey, string> = {
   'settings.feedbackHint':
     'Todo relato é lido. Um formulário abre no GitHub com a versão do app já preenchida; é preciso uma conta gratuita.',
   'settings.server': 'Servidor',
-  'settings.serverRow': 'Busca e login',
+  'settings.serverRow': 'Busca, login, versões',
   'settings.serverOpen': 'configurar',
   'setup.dialog': 'Configuração do servidor',
   'setup.welcomeTitle': 'Boas-vindas ao XenonShelf',

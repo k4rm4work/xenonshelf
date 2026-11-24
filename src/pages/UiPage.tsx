@@ -129,9 +129,9 @@ const SECTIONS = ['Buttons', 'Pickers', 'Toolbar', 'Shelf', 'Game card', 'Notice
 /** The server setup in each state it can be in. Saving from here reaches the dev server's own
     setup (data/config.json), never a library. */
 const SETUP_STATES: Record<string, SetupStatus> = {
-  'nothing set': { firstRun: true, igdb: 'none', login: 'none' },
-  'set in the app': { firstRun: false, igdb: 'app', login: 'app', user: 'kolekcjoner' },
-  'set in .env.local': { firstRun: false, igdb: 'env', login: 'env', user: 'kolekcjoner' },
+  'nothing set': { firstRun: true, igdb: 'none', login: 'none', updateCheck: true },
+  'set in the app': { firstRun: false, igdb: 'app', login: 'app', user: 'kolekcjoner', updateCheck: false },
+  'set in .env.local': { firstRun: false, igdb: 'env', login: 'env', user: 'kolekcjoner', updateCheck: true },
 };
 
 function Section({ title, children }: { title: (typeof SECTIONS)[number]; children: ReactNode }) {

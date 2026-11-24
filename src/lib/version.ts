@@ -6,6 +6,8 @@ declare const __BUILD_DATE__: string;
 export const APP_NAME = 'XenonShelf';
 export const APP_AUTHOR = "Szymon 'k4rm4' Kucharski";
 const REPO_URL = 'https://github.com/k4rm4work/xenonshelf';
+/** The README's steps for moving a server to a new version. */
+export const UPDATE_GUIDE_URL = `${REPO_URL}#updating`;
 
 export const BUILD = {
   version: __APP_VERSION__,

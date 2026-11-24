@@ -6,18 +6,31 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import { sendJson } from './api.ts';
 import { envLogin, hashPassword, loginProblem, storedLogin, type Login, type StoredPassword } from './auth.ts';
 import { igdbKeysWork } from './igdb.ts';
+import type { NewRelease } from './releases.ts';
 
 export type ServerConfig = {
   igdb?: { clientId: string; clientSecret: string };
   login?: { user: string; password: StoredPassword };
   /** The first-run guide was finished or skipped; it isn't offered again. */
   setupDone?: boolean;
+  /** false once turned off in the app: the server no longer asks GitHub for new releases. */
+  updateCheck?: boolean;
 };
 
 type Source = 'env' | 'app' | 'none';
 
 /** What the app is told: where each setting comes from, never the secrets themselves. */
-export type SetupStatus = { firstRun: boolean; igdb: Source; login: Source; user?: string };
+export type SetupStatus = {
+  firstRun: boolean;
+  igdb: Source;
+  login: Source;
+  user?: string;
+  updateCheck: boolean;
+  newRelease?: NewRelease;
+};
+
+/** The daily look for a newer release (see releases.ts); absent on the dev server. */
+type Releases = { check: () => Promise<void>; newRelease: () => NewRelease | undefined };
 
 type Env = {
   IGDB_CLIENT_ID?: string;
@@ -35,7 +48,7 @@ async function readJson(req: IncomingMessage): Promise<Record<string, unknown>> 
     if (text.length > MAX_BODY) throw new SyntaxError('Request body too large');
   }
   const data: unknown = JSON.parse(text || '{}');
-  if (!data || typeof data !== 'object' || Array.isArray(data)) throw new SyntaxError('Oczekiwano obiektu');
+  if (!data || typeof data !== 'object' || Array.isArray(data)) throw new SyntaxError('Expected an object');
   return data as Record<string, unknown>;
 }
 
@@ -59,6 +72,9 @@ function readConfig(file: string): ServerConfig {
   if (!object(value)) throw new Error('Invalid configuration ' + file + ': expected an object.');
   if (value.setupDone !== undefined && typeof value.setupDone !== 'boolean') {
     throw new Error('Invalid configuration ' + file + ': setupDone must be true or false.');
+  }
+  if (value.updateCheck !== undefined && typeof value.updateCheck !== 'boolean') {
+    throw new Error('Invalid configuration ' + file + ': updateCheck must be true or false.');
   }
   if (
     value.igdb !== undefined &&
@@ -88,7 +104,7 @@ function readConfig(file: string): ServerConfig {
   return value as ServerConfig;
 }
 
-export function createSetup({ configFile, env }: { configFile: string; env: Env }) {
+export function createSetup({ configFile, env, releases }: { configFile: string; env: Env; releases?: Releases }) {
   let config = readConfig(configFile);
   const fromEnv = envLogin(env.XENONSHELF_USER, env.XENONSHELF_PASSWORD);
   let fromApp: Login | undefined = config.login && storedLogin(config.login.user, config.login.password);
@@ -114,7 +130,14 @@ export function createSetup({ configFile, env }: { configFile: string; env: Env 
     const igdb: Source = igdbFromEnv ? 'env' : config.igdb ? 'app' : 'none';
     const login: Source = fromEnv ? 'env' : config.login ? 'app' : 'none';
     // A server set up by hand (keys in .env.local) has nothing left to guide through.
-    return { firstRun: !config.setupDone && igdb === 'none' && login === 'none', igdb, login, user: (fromEnv ?? fromApp)?.user };
+    return {
+      firstRun: !config.setupDone && igdb === 'none' && login === 'none',
+      igdb,
+      login,
+      user: (fromEnv ?? fromApp)?.user,
+      updateCheck: config.updateCheck !== false,
+      newRelease: releases?.newRelease(),
+    };
   };
 
   const handle = async (req: IncomingMessage, res: ServerResponse): Promise<boolean> => {
@@ -169,6 +192,17 @@ export function createSetup({ configFile, env }: { configFile: string; env: Env 
         return (sendJson(res, 200, status()), true);
       }
 
+      if (route === 'PUT /api/setup/updates') {
+        const body = await readJson(req);
+        if (typeof body.on !== 'boolean') return (sendJson(res, 400, { error: 'invalid' }), true);
+        const on = body.on;
+        // On is the default, so only "off" is written down.
+        await save(({ updateCheck: _updateCheck, ...rest }) => (on ? rest : { ...rest, updateCheck: false }));
+        // Turned on: look right away, so the panel can tell about a release already out.
+        if (on) await releases?.check();
+        return (sendJson(res, 200, status()), true);
+      }
+
       if (route === 'POST /api/setup/done') {
         await save((current) => ({ ...current, setupDone: true }));
         return (sendJson(res, 200, status()), true);
@@ -189,6 +223,8 @@ export function createSetup({ configFile, env }: { configFile: string; env: Env 
       igdbFromEnv
         ? { clientId: env.IGDB_CLIENT_ID, clientSecret: env.IGDB_CLIENT_SECRET }
         : { clientId: config.igdb?.clientId, clientSecret: config.igdb?.clientSecret },
+    /** Whether the server may ask GitHub for new releases. */
+    updateCheck: () => config.updateCheck !== false,
     /** Who may sign in: from the environment, else the login set in the app. */
     login: (): Login | undefined => fromEnv ?? fromApp,
   };

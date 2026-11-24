@@ -66,6 +66,7 @@ function Shell() {
         <div className="mb-1 ml-auto flex items-center gap-2">
           <SettingsMenu
             onServer={setup && (() => setServerOpen(true))}
+            newRelease={setup?.newRelease}
             wallpaper={wallpaper}
             onPreview={setPreview}
             onWallpaper={(id) => {

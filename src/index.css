@@ -1565,6 +1565,47 @@ html {
   color: #39424b;
 }
 
+/* A newer release, told about under the version: the app's note strip, made to fit the
+   panel's small print. */
+.settings-release {
+  gap: 9px;
+  min-height: 38px;
+  margin-top: 8px;
+  padding: 4px 5px 4px 10px;
+  font-size: 12.5px;
+}
+
+/* On a phone the keys drop under the words rather than squeezing them word by word. */
+.settings-release {
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+
+.settings-release > span {
+  flex: 1 0 auto;
+  white-space: nowrap;
+}
+
+/* The two keys move as one: both stay beside the words, or both drop under them. */
+.settings-release > .settings-release-actions {
+  display: flex;
+  flex: none;
+  margin-left: auto;
+}
+
+.settings-release > svg {
+  width: 17px;
+  height: 17px;
+}
+
+.settings-release .notice-action {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
 .settings-about code {
   padding: 1px 5px;
   border-radius: 4px;

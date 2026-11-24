@@ -1,16 +1,20 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { LANGUAGE_OPTIONS, useI18n } from '../lib/i18n';
 import { THEMES, useSettings } from '../lib/settings';
-import { APP_AUTHOR, APP_NAME, BUILD, feedbackUrl } from '../lib/version';
+import type { SetupStatus } from '../lib/setup';
+import { APP_AUTHOR, APP_NAME, BUILD, feedbackUrl, UPDATE_GUIDE_URL } from '../lib/version';
 import { WALLPAPERS, type Wallpaper } from '../lib/wallpapers';
 import { Brand } from './Brand';
 import { DataSettings } from './DataSettings';
 import { Dropdown } from './Dropdown';
+import { DownloadIcon } from './icons';
 import { Segmented } from './Segmented';
 
 type Props = {
   /** Opens the server's setup; absent where there is no server to set up. */
   onServer?: () => void;
+  /** A newer release the server found; it is told about under the version. */
+  newRelease?: SetupStatus['newRelease'];
   wallpaper: string | undefined;
   onWallpaper: (id: string) => void;
   /** Shows a wallpaper behind the page while it is hovered or focused; undefined restores. */
@@ -22,7 +26,7 @@ const COLUMNS = 4;
 /** Header button opening the settings panel: one row per setting, so the panel stays short
     as settings are added. The wallpaper row opens its own page of thumbnails, each
     previewed live behind the page. */
-export function SettingsMenu({ onServer, wallpaper, onWallpaper, onPreview }: Props) {
+export function SettingsMenu({ onServer, newRelease, wallpaper, onWallpaper, onPreview }: Props) {
   const { settings, update } = useSettings();
   const { t, has, rich, date, labels } = useI18n();
   const [open, setOpen] = useState(false);
@@ -275,6 +279,20 @@ export function SettingsMenu({ onServer, wallpaper, onWallpaper, onPreview }: Pr
             {BUILD.commit && <code>{BUILD.commit}</code>}
             <span className="ml-auto">{t('settings.build', { date: date(BUILD.builtAt) })}</span>
           </div>
+          {newRelease && (
+            <div className="notice notice-green settings-release">
+              <DownloadIcon />
+              <span>{rich('settings.newRelease', { version: <b>{newRelease.version}</b> })}</span>
+              <span className="settings-release-actions">
+                <a href={newRelease.url} target="_blank" rel="noreferrer" className="notice-action">
+                  {t('settings.newReleaseNotes')}
+                </a>
+                <a href={UPDATE_GUIDE_URL} target="_blank" rel="noreferrer" className="notice-action notice-action-primary">
+                  {t('settings.newReleaseHow')}
+                </a>
+              </span>
+            </div>
+          )}
           <p className="settings-credit">
             {rich('settings.author', {
               author: (

@@ -6,6 +6,7 @@ import { changeSetup, type SetupStatus } from '../lib/setup';
 import { Button } from './Button';
 import { CloseButton, Dialog, useDialogClose } from './Dialog';
 import { Dropdown } from './Dropdown';
+import { Segmented } from './Segmented';
 import { CompletedIcon } from './icons';
 import { RingMark } from './RingMark';
 
@@ -254,7 +255,30 @@ function Heading({ kicker, title, children }: { kicker?: string; title: string; 
   );
 }
 
-/** The server's settings, from the settings panel: the IGDB keys and the login. */
+/** Whether the server looks for new releases; on by default. */
+function UpdatesForm({ status, onChange }: FormProps) {
+  const { t } = useI18n();
+  const [busy, setBusy] = useState(false);
+  const change = async (value: 'on' | 'off') => {
+    setBusy(true);
+    const result = await changeSetup('PUT', 'updates', { on: value === 'on' });
+    setBusy(false);
+    if ('status' in result) onChange(result.status);
+  };
+  return (
+    <div className="mt-4">
+      <Segmented
+        label={t('setup.updatesTitle')}
+        value={status.updateCheck ? 'on' : 'off'}
+        options={{ on: t('setup.updatesOn'), off: t('setup.updatesOff') }}
+        onChange={change}
+        disabled={busy}
+      />
+    </div>
+  );
+}
+
+/** The server's settings, from the settings panel: the IGDB keys, the login and the update check. */
 export function ServerSettingsDialog({ status, onChange, onClose }: FormProps & { onClose: () => void }) {
   const { t } = useI18n();
   const loginBefore = status.login;
@@ -269,6 +293,9 @@ export function ServerSettingsDialog({ status, onChange, onClose }: FormProps & 
         <p className="mt-1 max-w-2xl text-[15px] text-slate-600">{t('setup.loginIntro')}</p>
         <LoginForm status={status} onChange={onChange} />
         {status.login === 'app' && loginBefore !== 'app' && <ReloadNote />}
+        <h3 className="mt-8 border-t border-slate-300/70 pt-6 text-xl font-semibold text-slate-800">{t('setup.updatesTitle')}</h3>
+        <p className="mt-1 max-w-2xl text-[15px] text-slate-600">{t('setup.updatesIntro')}</p>
+        <UpdatesForm status={status} onChange={onChange} />
       </div>
     </Dialog>
   );

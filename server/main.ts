@@ -6,11 +6,12 @@
 //   SEED_FILE     library copied to LIBRARY_FILE when it does not exist yet (default: empty)
 //   IGDB_CLIENT_ID / IGDB_CLIENT_SECRET  enable the IGDB search (or set them in the app)
 //   XENONSHELF_USER / XENONSHELF_PASSWORD  ask for a login (or set one in the app)
-import { createReadStream, promises as fs } from 'node:fs';
+import { createReadStream, readFileSync, promises as fs } from 'node:fs';
 import { createServer } from 'node:http';
 import path from 'node:path';
 import { createApiHandler, sendJson } from './api.ts';
 import { createBasicAuth } from './auth.ts';
+import { createReleaseCheck } from './releases.ts';
 import { createSetup } from './setup.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
@@ -19,8 +20,22 @@ const PORT = Number(process.env.PORT ?? 3000);
 const LIBRARY_FILE = path.resolve(process.env.LIBRARY_FILE ?? path.join(ROOT, 'data/games.json'));
 const SEED_FILE = path.resolve(process.env.SEED_FILE ?? path.join(ROOT, 'data/starter-library.json'));
 // The settings made in the app live beside the library, in the same volume.
-const setup = createSetup({ configFile: path.join(path.dirname(LIBRARY_FILE), 'config.json'), env: process.env });
+const setup = createSetup({
+  configFile: path.join(path.dirname(LIBRARY_FILE), 'config.json'),
+  env: process.env,
+  releases: { check: () => releases.check(), newRelease: () => releases.newRelease() },
+});
+// The version comes from the build (see vite.config.ts); without one there is nothing to compare.
+const releases = createReleaseCheck({ current: builtVersion(), enabled: setup.updateCheck });
 const auth = createBasicAuth(setup.login);
+
+function builtVersion(): string | undefined {
+  try {
+    return (JSON.parse(readFileSync(path.join(DIST, 'version.json'), 'utf8')) as { version?: string }).version;
+  } catch {
+    return undefined;
+  }
+}
 
 const MIME: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -102,6 +117,7 @@ createServer(async (req, res) => {
     else res.end();
   }
 }).listen(PORT, () => {
+  releases.start();
   console.log(`XenonShelf is listening on port ${PORT} (data: ${LIBRARY_FILE})`);
   console.log(
     auth.enabled

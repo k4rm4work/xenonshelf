@@ -113,6 +113,14 @@ export const pl = {
   'theme.dark': 'ciemny',
   'settings.build': 'build {date}',
   'settings.author': 'Autor: {author}',
+  'settings.newRelease': 'Jest nowa wersja {version}',
+  'settings.newReleaseNotes': 'co nowego',
+  'settings.newReleaseHow': 'jak zaktualizować',
+  'setup.updatesTitle': 'nowe wersje',
+  'setup.updatesIntro':
+    'Raz dziennie serwer pyta GitHuba, czy wyszedł nowszy XenonShelf, a panel ustawień mówi o tym pod numerem wersji. Nie są wysyłane żadne dane o Tobie ani o kolekcji.',
+  'setup.updatesOn': 'sprawdzaj',
+  'setup.updatesOff': 'nie sprawdzaj',
   'settings.data': 'Biblioteka',
   'settings.exportCsv': 'Arkusz (CSV)',
   'settings.backup': 'Kopia zapasowa (JSON)',
@@ -129,7 +137,7 @@ export const pl = {
   'settings.feedbackHint':
     'Każde zgłoszenie jest czytane. Otworzy się formularz na GitHubie z wpisaną wersją aplikacji; potrzebne jest darmowe konto.',
   'settings.server': 'Serwer',
-  'settings.serverRow': 'Wyszukiwarka i logowanie',
+  'settings.serverRow': 'Wyszukiwarka, logowanie, wersje',
   'settings.serverOpen': 'ustaw',
   'setup.dialog': 'Konfiguracja serwera',
   'setup.welcomeTitle': 'Witaj w XenonShelf',

@@ -5,12 +5,21 @@ import { CAN_EDIT } from './store';
 export type SetupSource = 'env' | 'app' | 'none';
 
 /** The server's own settings as it tells them (see server/setup.ts); never the secrets. */
-export type SetupStatus = { firstRun: boolean; igdb: SetupSource; login: SetupSource; user?: string };
+export type SetupStatus = {
+  firstRun: boolean;
+  igdb: SetupSource;
+  login: SetupSource;
+  user?: string;
+  /** The server asks GitHub once a day whether a newer XenonShelf is out. */
+  updateCheck: boolean;
+  /** That newer release, when there is one. */
+  newRelease?: { version: string; url: string };
+};
 
 /** Changes one server setting; the new status, or the reason it was refused. */
 export async function changeSetup(
   method: 'PUT' | 'DELETE' | 'POST',
-  part: 'igdb' | 'login' | 'done',
+  part: 'igdb' | 'login' | 'updates' | 'done',
   body?: unknown,
 ): Promise<{ status: SetupStatus } | { error: string }> {
   try {

@@ -8,6 +8,10 @@ updates:
       time: '08:00'
       timezone: Europe/Warsaw
     open-pull-requests-limit: 10
+    ignore:
+      # Types for the Node the app runs on (Dockerfile, CI): moved by hand with it.
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
     groups:
       npm-minor-patch:
         update-types:

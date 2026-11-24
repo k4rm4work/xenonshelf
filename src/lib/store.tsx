@@ -124,13 +124,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addGame: (game) => commit((all) => [...all, recordAdded(game)], { undoable: true }),
       importGames: (added, changed) =>
         commit(
-          (all) => [
-            ...all.map((g) => {
-              const edited = changed.find((c) => c.id === g.id);
-              return edited ? recordChange(g, edited) : g;
-            }),
-            ...added.map((g) => recordAdded(g)),
-          ],
+          (all) => {
+            // Index once so large imports don't scan the changed list for every library entry.
+            // Keep the first matching edit, as Array.find did before this optimization.
+            const changedById = new Map<string, Game>();
+            for (const game of changed) {
+              if (!changedById.has(game.id)) changedById.set(game.id, game);
+            }
+            return [
+              ...all.map((g) => {
+                const edited = changedById.get(g.id);
+                return edited ? recordChange(g, edited) : g;
+              }),
+              ...added.map((g) => recordAdded(g)),
+            ];
+          },
           { undoable: true },
         ),
       updateGame: (game, options) => commit((all) => all.map((g) => (g.id === game.id ? recordChange(g, game) : g)), options),

@@ -81,7 +81,7 @@ need forms the others don't, the test says which. Genres are stored as ids
 ## The Docker image
 
 `docker compose up -d --build` builds the image from this folder instead of pulling it. CI
-tests every push and publishes `ghcr.io/k4rm4work/xenonshelf` for amd64 and arm64: `edge` and
+tests every push and publishes `ghcr.io/xenonshelf/xenonshelf` for amd64 and arm64: `edge` and
 the short commit from `main`, and the version and `latest` from a version tag. Servers pull
 `latest`, so a change reaches them only once it is released:
 

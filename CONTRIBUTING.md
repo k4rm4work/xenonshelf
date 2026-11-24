@@ -2,15 +2,15 @@
 
 XenonShelf gets better through the people who use it, and your feedback is very welcome.
 
-- **Found a problem?** [Report it](https://github.com/k4rm4work/xenonshelf/issues/new?template=bug_report.yml).
+- **Found a problem?** [Report it](https://github.com/xenonshelf/xenonshelf/issues/new?template=bug_report.yml).
   The quickest way is from the app itself: **Settings → Report a problem** fills in the
   version for you.
-- **Have an idea?** [Suggest it](https://github.com/k4rm4work/xenonshelf/issues/new?template=idea.yml),
+- **Have an idea?** [Suggest it](https://github.com/xenonshelf/xenonshelf/issues/new?template=idea.yml),
   or give a 👍 to an existing one: the most wanted ideas come first.
-- **A word that reads wrong in your language?** [Suggest a better one](https://github.com/k4rm4work/xenonshelf/issues/new?template=translation.yml).
+- **A word that reads wrong in your language?** [Suggest a better one](https://github.com/xenonshelf/xenonshelf/issues/new?template=translation.yml).
   The app speaks English, Español, Português (Brasil), Français, Deutsch and Polski, and
   corrections from native speakers are the most valuable help there is.
-- **A question, or a shelf to show?** Start a [discussion](https://github.com/k4rm4work/xenonshelf/discussions).
+- **A question, or a shelf to show?** Start a [discussion](https://github.com/xenonshelf/xenonshelf/discussions).
 
 Reports and ideas can be written in English or Polish; translation fixes in their own language.
 

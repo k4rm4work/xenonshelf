@@ -4,7 +4,7 @@ name: xenonshelf
 services:
   xenonshelf:
     # The ready image; `docker compose up -d --build` builds it from this folder instead.
-    image: ghcr.io/k4rm4work/xenonshelf:latest
+    image: ghcr.io/xenonshelf/xenonshelf:latest
     build: .
     container_name: xenonshelf
     restart: unless-stopped

@@ -120,7 +120,7 @@ describe('server setup from the app', () => {
   });
 
   it('tells about a newer release, and stops asking once the check is turned off', async () => {
-    const release = { version: '9.9.9', url: 'https://github.com/k4rm4work/xenonshelf/releases/tag/v9.9.9' };
+    const release = { version: '9.9.9', url: 'https://github.com/xenonshelf/xenonshelf/releases/tag/v9.9.9' };
     let found: typeof release | undefined;
     let checks = 0;
     let on: () => boolean = () => true;

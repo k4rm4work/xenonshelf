@@ -2,7 +2,7 @@
 
 Your Xbox 360 collection and wishlist, in the style of the console's dashboard.
 
-**[See it on the website →](https://k4rm4work.github.io/xenonshelf/)**
+**[See it on the website →](https://xenonshelf.github.io/xenonshelf/)**
 
 ![XenonShelf showing a collection of games as Xbox 360 cases with their covers](docs/app.webp)
 
@@ -34,7 +34,7 @@ named `docker-compose.yml`:
 ```yaml
 services:
   xenonshelf:
-    image: ghcr.io/k4rm4work/xenonshelf:latest
+    image: ghcr.io/xenonshelf/xenonshelf:latest
     container_name: xenonshelf
     restart: unless-stopped
     ports:
@@ -102,6 +102,10 @@ docker compose pull && docker compose up -d
 
 Your collection is not touched.
 
+> **Installed before November 25, 2026?** The image moved to `ghcr.io/xenonshelf/xenonshelf`.
+> In `docker-compose.yml`, change the `image:` line to `ghcr.io/xenonshelf/xenonshelf:latest`,
+> then run the command above. The old `ghcr.io/k4rm4work/xenonshelf` gets no new versions.
+
 ## Your data and backups
 
 Everything lives in the `library-data` folder next to `docker-compose.yml`:
@@ -163,7 +167,7 @@ external data may have their own separate terms.
 
 Found a problem or have an idea? Open **Settings → Feedback** in the app: it takes you to a
 short form with the app version already filled in. Questions and everything else go to the
-[discussions](https://github.com/k4rm4work/xenonshelf/discussions). Every report is read.
+[discussions](https://github.com/xenonshelf/xenonshelf/discussions). Every report is read.
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how it works.
 
 ## For developers

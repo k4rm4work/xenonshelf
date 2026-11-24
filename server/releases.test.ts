@@ -15,7 +15,7 @@ describe('compareVersions', () => {
 });
 
 describe('createReleaseCheck', () => {
-  const release = { version: '1.0.2', url: 'https://github.com/k4rm4work/xenonshelf/releases/tag/v1.0.2' };
+  const release = { version: '1.0.2', url: 'https://github.com/xenonshelf/xenonshelf/releases/tag/v1.0.2' };
 
   it('tells about a newer release only', async () => {
     const newer = createReleaseCheck({ current: '1.0.1', enabled: () => true, fetchLatest: async () => release });

@@ -2,7 +2,7 @@
 // day, so the settings panel can say so. The browser never talks to GitHub itself, and
 // nothing about the user or the collection is sent.
 
-const LATEST_RELEASE = 'https://api.github.com/repos/k4rm4work/xenonshelf/releases/latest';
+const LATEST_RELEASE = 'https://api.github.com/repos/xenonshelf/xenonshelf/releases/latest';
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export type NewRelease = { version: string; url: string };

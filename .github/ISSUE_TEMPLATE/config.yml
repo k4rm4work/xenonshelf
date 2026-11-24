@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
   - name: Ask a question or share your shelf
-    url: https://github.com/k4rm4work/xenonshelf/discussions
+    url: https://github.com/xenonshelf/xenonshelf/discussions
     about: Questions about installing or using XenonShelf, and everything else.

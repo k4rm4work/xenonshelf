@@ -32,7 +32,7 @@ async function readJson(req: IncomingMessage): Promise<Record<string, unknown>> 
   let text = '';
   for await (const chunk of req) {
     text += chunk;
-    if (text.length > MAX_BODY) throw new SyntaxError('Za duże dane');
+    if (text.length > MAX_BODY) throw new SyntaxError('Request body too large');
   }
   const data: unknown = JSON.parse(text || '{}');
   if (!data || typeof data !== 'object' || Array.isArray(data)) throw new SyntaxError('Oczekiwano obiektu');
@@ -47,18 +47,18 @@ function readConfig(file: string): ServerConfig {
     raw = readFileSync(file, 'utf8');
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === 'ENOENT') return {};
-    throw new Error('Nie można odczytać konfiguracji ' + file + '; serwer nie uruchomi się bezpiecznie.', { cause: err });
+    throw new Error('Cannot read the configuration ' + file + '; the server will not start without it.', { cause: err });
   }
   let value: unknown;
   try {
     value = JSON.parse(raw);
   } catch (err) {
-    throw new Error('Nieprawidłowy JSON w ' + file + '; napraw lub przywróć konfigurację.', { cause: err });
+    throw new Error('Invalid JSON in ' + file + '; fix it or restore the configuration.', { cause: err });
   }
   const object = (x: unknown): x is Record<string, unknown> => typeof x === 'object' && x !== null && !Array.isArray(x);
-  if (!object(value)) throw new Error('Nieprawidłowa konfiguracja ' + file + ': oczekiwano obiektu.');
+  if (!object(value)) throw new Error('Invalid configuration ' + file + ': expected an object.');
   if (value.setupDone !== undefined && typeof value.setupDone !== 'boolean') {
-    throw new Error('Nieprawidłowa konfiguracja ' + file + ': setupDone musi być wartością logiczną.');
+    throw new Error('Invalid configuration ' + file + ': setupDone must be true or false.');
   }
   if (
     value.igdb !== undefined &&
@@ -68,7 +68,7 @@ function readConfig(file: string): ServerConfig {
       typeof value.igdb.clientSecret !== 'string' ||
       !value.igdb.clientSecret.trim())
   ) {
-    throw new Error('Nieprawidłowa konfiguracja ' + file + ': sekcja igdb jest uszkodzona.');
+    throw new Error('Invalid configuration ' + file + ': the igdb section is damaged.');
   }
   if (value.login !== undefined) {
     const login = value.login;
@@ -83,7 +83,7 @@ function readConfig(file: string): ServerConfig {
       typeof login.password.hash !== 'string' ||
       !/^[a-f0-9]{64}$/i.test(login.password.hash)
     )
-      throw new Error('Nieprawidłowa konfiguracja ' + file + ': sekcja login jest uszkodzona; logowanie nie zostanie wyłączone.');
+      throw new Error('Invalid configuration ' + file + ': the login section is damaged; the login will not be turned off.');
   }
   return value as ServerConfig;
 }

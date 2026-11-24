@@ -26,8 +26,8 @@ describe('self-hosted Basic authentication', () => {
   });
 
   it('requires both environment values and a sufficiently long password', () => {
-    expect(() => envLogin('shelf', undefined)).toThrow(/obie zmienne/);
-    expect(() => envLogin('shelf', 'short')).toThrow(/12 znaków/);
+    expect(() => envLogin('shelf', undefined)).toThrow(/Set both/);
+    expect(() => envLogin('shelf', 'short')).toThrow(/12 characters/);
   });
 
   it('protects requests and accepts the configured credentials', async () => {

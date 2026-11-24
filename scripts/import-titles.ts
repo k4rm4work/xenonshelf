@@ -15,14 +15,14 @@ const DATA_FILE = path.resolve(import.meta.dirname, '../data/games.json');
 
 const file = process.argv[2];
 if (!file) {
-  console.error('Użycie: npm run import -- <plik.txt>');
+  console.error('Usage: npm run import -- <file.txt>');
   process.exit(1);
 }
 
 try {
   process.loadEnvFile(path.resolve(import.meta.dirname, '../.env.local'));
 } catch {
-  console.warn('Brak .env.local – gry zostaną dodane bez danych z IGDB.');
+  console.warn('No .env.local: games will be added without IGDB data.');
 }
 const env = { clientId: process.env.IGDB_CLIENT_ID, clientSecret: process.env.IGDB_CLIENT_SECRET };
 const hasIgdb = Boolean(env.clientId && env.clientSecret);
@@ -48,14 +48,14 @@ for (const line of lines) {
     try {
       match = pickBestMatch(title, await searchXbox360Games(title, env))?.result;
     } catch (e) {
-      console.warn(`IGDB błąd dla „${title}”: ${(e as Error).message}`);
+      console.warn(`IGDB error for "${title}": ${(e as Error).message}`);
     }
   }
   const base = match ?? { title };
 
   const duplicate = findDuplicate(library.games, base);
   if (duplicate) {
-    report.skipped.push(`${title} → już jest jako „${duplicate.title}”`);
+    report.skipped.push(`${title} → already there as "${duplicate.title}"`);
     continue;
   }
 
@@ -78,13 +78,13 @@ for (const line of lines) {
 
 await fs.writeFile(DATA_FILE, JSON.stringify(library, null, 2) + '\n', 'utf8');
 
-console.log(`\nDodano z IGDB (${report.added.length}):`);
+console.log(`\nAdded from IGDB (${report.added.length}):`);
 report.added.forEach((t) => console.log(`  ✓ ${t}`));
 if (report.noMatch.length) {
-  console.log(`\nDodano bez dopasowania w IGDB (${report.noMatch.length}):`);
+  console.log(`\nAdded without an IGDB match (${report.noMatch.length}):`);
   report.noMatch.forEach((t) => console.log(`  ? ${t}`));
 }
 if (report.skipped.length) {
-  console.log(`\nPominięto duplikaty (${report.skipped.length}):`);
+  console.log(`\nSkipped duplicates (${report.skipped.length}):`);
   report.skipped.forEach((t) => console.log(`  – ${t}`));
 }

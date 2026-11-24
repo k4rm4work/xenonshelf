@@ -47,9 +47,9 @@ describe('server setup from the app', () => {
       expect(createSetup({ configFile: file, env: {} }).login()).toBeUndefined();
       const { writeFileSync } = await import('node:fs');
       writeFileSync(file, '{broken');
-      expect(() => createSetup({ configFile: file, env: {} })).toThrow(/Nieprawidłowy JSON/);
+      expect(() => createSetup({ configFile: file, env: {} })).toThrow(/Invalid JSON/);
       writeFileSync(file, JSON.stringify({ login: { user: 'shelf', password: { salt: 'bad', hash: 'bad' } } }));
-      expect(() => createSetup({ configFile: file, env: {} })).toThrow(/sekcja login jest uszkodzona/);
+      expect(() => createSetup({ configFile: file, env: {} })).toThrow(/login section is damaged/);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

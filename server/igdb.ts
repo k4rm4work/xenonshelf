@@ -41,6 +41,17 @@ const normalize = (s: string) =>
 
 export type MatchConfidence = 'exact' | 'close';
 
+// titleKey also equates "II" with "2", "&" with "and" and drops a leading "The".
+const forms = (s: string) => [normalize(s), titleKey(s)];
+// A game is known by its own name and by the one it was found by, e.g. its Polish title.
+const names = (r: IgdbSearchResult) => [r.title, ...(r.alias ? [r.alias] : [])].map(forms);
+
+/** Whether a result is the game the title names, not merely one that contains it. */
+function isExactTitle(title: string, result: IgdbSearchResult) {
+  const wanted = forms(title);
+  return names(result).some((f) => f.some((name, i) => name === wanted[i]));
+}
+
 /**
  * Picks the IGDB result for a shelf title. "exact" when the normalised names are equal,
  * "close" when one name contains the other (subtitles, editions); otherwise no match,
@@ -50,12 +61,8 @@ export function pickBestMatch(
   title: string,
   results: IgdbSearchResult[],
 ): { result: IgdbSearchResult; confidence: MatchConfidence } | undefined {
-  // titleKey also equates "II" with "2", "&" with "and" and drops a leading "The".
-  const forms = (s: string) => [normalize(s), titleKey(s)];
   const wanted = forms(title);
-  // A game is known by its own name and by the one it was found by, e.g. its Polish title.
-  const names = (r: IgdbSearchResult) => [r.title, ...(r.alias ? [r.alias] : [])].map(forms);
-  const exact = results.find((r) => names(r).some((f) => f.some((name, i) => name === wanted[i])));
+  const exact = results.find((r) => isExactTitle(title, r));
   if (exact) return { result: exact, confidence: 'exact' };
   const close = results.find((r) =>
     names(r).some((f) =>
@@ -66,6 +73,13 @@ export function pickBestMatch(
     ),
   );
   return close && { result: close, confidence: 'close' };
+}
+
+/** IGDB's search ranks bundles and editions ("Halo 3 + Halo Wars") above the game whose
+    name was typed; that game goes first, the rest keep IGDB's order. */
+export function exactTitlesFirst(query: string, results: IgdbSearchResult[]): IgdbSearchResult[] {
+  const exact = results.filter((r) => isExactTitle(query, r));
+  return [...exact, ...results.filter((r) => !exact.includes(r))];
 }
 
 // Kept for the keys it was issued to: keys changed in the app's setup get a token of their own.
@@ -115,7 +129,7 @@ type Env = { clientId?: string; clientSecret?: string };
 /** One APIcalypse query against an IGDB endpoint. */
 async function queryIgdb<T>(endpoint: string, body: string, env: Env): Promise<T[]> {
   if (!env.clientId || !env.clientSecret) {
-    throw new IgdbConfigError('Brak kluczy IGDB: dodaj je w ustawieniach aplikacji (Serwer → IGDB).');
+    throw new IgdbConfigError('No IGDB keys: add them in the app under Settings → Server.');
   }
   const token = await getToken(env.clientId, env.clientSecret);
   const res = await fetch(`https://api.igdb.com/v4/${endpoint}`, {
@@ -143,7 +157,7 @@ export async function searchXbox360Games(query: string, env: Env): Promise<IgdbS
   const escaped = query.replace(/["\\]/g, '');
   const body = [`search "${escaped}";`, `fields ${GAME_FIELDS};`, `where platforms = (${XBOX_360_PLATFORM_ID});`, 'limit 20;'].join(' ');
   const found = (await queryIgdb<RawIgdbGame>('games', body, env)).filter((raw) => !isCancelled(raw)).map(mapIgdbGame);
-  return found.length ? found : searchByOtherNames(escaped, env);
+  return exactTitlesFirst(query, found.length ? found : await searchByOtherNames(escaped, env));
 }
 
 type RawAlternativeName = { name: string; game?: RawIgdbGame };

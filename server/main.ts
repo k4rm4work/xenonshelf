@@ -44,7 +44,7 @@ try {
 } catch {
   await fs.mkdir(path.dirname(LIBRARY_FILE), { recursive: true });
   await fs.copyFile(SEED_FILE, LIBRARY_FILE);
-  console.log(`Utworzono ${LIBRARY_FILE} z ${SEED_FILE}`);
+  console.log(`Created ${LIBRARY_FILE} from ${SEED_FILE}`);
 }
 
 // Saves write a temp file beside the library and rename it, so the folder must be writable.
@@ -54,8 +54,8 @@ try {
   await fs.access(LIBRARY_FILE, fs.constants.W_OK);
 } catch {
   console.error(
-    `Brak prawa zapisu do ${path.dirname(LIBRARY_FILE)}: zmiany w kolekcji nie zapiszą się.
-` + 'Nadaj folder z danymi użytkownikowi, który uruchamia serwer (w Dockerze: UID 1000).',
+    `No permission to write to ${path.dirname(LIBRARY_FILE)}: changes to the collection will not be saved.
+` + 'Give the data folder to the user running the server (in Docker: UID 1000).',
   );
 }
 
@@ -102,10 +102,10 @@ createServer(async (req, res) => {
     else res.end();
   }
 }).listen(PORT, () => {
-  console.log(`Biblioteka Xbox 360: http://localhost:${PORT}  (dane: ${LIBRARY_FILE})`);
+  console.log(`XenonShelf is listening on port ${PORT} (data: ${LIBRARY_FILE})`);
   console.log(
     auth.enabled
-      ? 'Logowanie: włączone'
-      : 'Uwaga: logowanie wyłączone (włączysz je w ustawieniach aplikacji); używaj wyłącznie w zaufanej sieci lub przez VPN.',
+      ? 'Login: on'
+      : 'Note: login is off (turn it on in the app settings); use the app only on a trusted network or over a VPN.',
   );
 });

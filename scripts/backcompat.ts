@@ -12,7 +12,7 @@ const OUT = path.resolve(import.meta.dirname, '../data/backcompat.json');
 const url = `https://en.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(PAGE)}&prop=wikitext&format=json&formatversion=2`;
 const res = await fetch(url, { headers: { 'User-Agent': 'XenonShelf (personal game collection app)' } });
 if (!res.ok) {
-  console.error(`Wikipedia odpowiedziała ${res.status}`);
+  console.error(`Wikipedia answered ${res.status}`);
   process.exit(1);
 }
 const wikitext = ((await res.json()) as { parse: { wikitext: string } }).parse.wikitext;
@@ -21,7 +21,7 @@ const wikitext = ((await res.json()) as { parse: { wikitext: string } }).parse.w
 const start = wikitext.indexOf('id="360softwarelist"');
 const end = wikitext.indexOf('\n|}', start);
 if (start < 0 || end < 0) {
-  console.error('Nie znaleziono tabeli gier z Xbox 360 – zmienił się układ strony.');
+  console.error('No table of Xbox 360 games found: the page layout has changed.');
   process.exit(1);
 }
 
@@ -40,4 +40,4 @@ const titles = [...wikitext.slice(start, end).matchAll(/^!\s*scope=row[^|\n]*\|\
 
 const unique = [...new Set(titles)].sort((a, b) => a.localeCompare(b, 'en'));
 await fs.writeFile(OUT, JSON.stringify({ source: `https://en.wikipedia.org/wiki/${PAGE}`, titles: unique }, null, 2) + '\n');
-console.log(`Zapisano ${unique.length} gier do ${path.relative(process.cwd(), OUT)}`);
+console.log(`Saved ${unique.length} games to ${path.relative(process.cwd(), OUT)}`);

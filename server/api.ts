@@ -65,7 +65,7 @@ async function readBody(req: IncomingMessage): Promise<string> {
   let size = 0;
   for await (const chunk of req) {
     size += (chunk as Buffer).length;
-    if (size > MAX_BODY_BYTES) throw new BodyTooLargeError('Za duże dane');
+    if (size > MAX_BODY_BYTES) throw new BodyTooLargeError('Request body too large');
     chunks.push(chunk as Buffer);
   }
   return Buffer.concat(chunks).toString('utf8');

@@ -17,15 +17,15 @@ export const MIN_PASSWORD = 12;
 
 /** Why a user name and password can't be used, or undefined when they can. */
 export function loginProblem(user: string, password: string): string | undefined {
-  if (!user.trim() || user.includes(':')) return 'Nazwa użytkownika nie może być pusta ani zawierać dwukropka.';
-  if (password.length < MIN_PASSWORD) return `Hasło musi mieć co najmniej ${MIN_PASSWORD} znaków.`;
+  if (!user.trim() || user.includes(':')) return 'The user name must not be empty or contain a colon.';
+  if (password.length < MIN_PASSWORD) return `The password must have at least ${MIN_PASSWORD} characters.`;
   return undefined;
 }
 
 /** The login set with XENONSHELF_USER and XENONSHELF_PASSWORD, if any. */
 export function envLogin(username?: string, password?: string): Login | undefined {
   if (!username && !password) return undefined;
-  if (!username || !password) throw new Error('Ustaw obie zmienne XENONSHELF_USER i XENONSHELF_PASSWORD albo żadnej.');
+  if (!username || !password) throw new Error('Set both XENONSHELF_USER and XENONSHELF_PASSWORD, or neither.');
   const problem = loginProblem(username, password);
   if (problem) throw new Error(`XENONSHELF_USER / XENONSHELF_PASSWORD: ${problem}`);
   return { user: username, verify: (given) => equalSecret(given, password) };

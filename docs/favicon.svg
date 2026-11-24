@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#48525b"/>
+      <stop offset=".5" stop-color="#262c32"/>
+      <stop offset="1" stop-color="#121518"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e9edf0"/>
+      <stop offset=".5" stop-color="#8e98a1"/>
+      <stop offset="1" stop-color="#3a424a"/>
+    </linearGradient>
+    <!-- Brightest on the outer edge, like light coming through the plastic ring -->
+    <radialGradient id="lit" cx="32" cy="32" r="22" gradientUnits="userSpaceOnUse">
+      <stop offset=".6" stop-color="#5fc21e"/>
+      <stop offset="1" stop-color="#d4ff9e"/>
+    </radialGradient>
+    <linearGradient id="dim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6a747d"/>
+      <stop offset="1" stop-color="#454d55"/>
+    </linearGradient>
+    <radialGradient id="button" cx="45%" cy="35%" r="70%">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset=".6" stop-color="#d3d9de"/>
+      <stop offset="1" stop-color="#8e98a1"/>
+    </radialGradient>
+    <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity=".22"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2.5"/>
+    </filter>
+  </defs>
+
+  <!-- Dark disc with a brushed-metal rim and a soft top highlight -->
+  <circle cx="32" cy="32" r="29" fill="url(#body)" stroke="url(#rim)" stroke-width="2"/>
+  <ellipse cx="32" cy="17" rx="20" ry="11" fill="url(#gloss)"/>
+
+  <!-- Four quadrants of the ring, the top-left one lit: player 1, as in the header symbol at rest -->
+  <g fill="none" stroke-width="7">
+    <path d="M49.87 34.19 A18 18 0 0 1 34.19 49.87" stroke="url(#dim)"/>
+    <path d="M29.81 49.87 A18 18 0 0 1 14.13 34.19" stroke="url(#dim)"/>
+    <path d="M34.19 14.13 A18 18 0 0 1 49.87 29.81" stroke="url(#dim)"/>
+    <path d="M14.13 29.81 A18 18 0 0 1 29.81 14.13" stroke="#b6f37a" stroke-width="9" filter="url(#glow)" opacity=".8"/>
+    <path d="M14.13 29.81 A18 18 0 0 1 29.81 14.13" stroke="url(#lit)"/>
+  </g>
+
+  <!-- Metal power button in the middle -->
+  <circle cx="32" cy="32" r="8" fill="url(#button)" stroke="#2a3036" stroke-width="1.2"/>
+</svg>

@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>XenonShelf</title>
+    <meta
+      name="description"
+      content="Your Xbox 360 collection and wishlist, in the style of the console's dashboard. Self-hosted with Docker."
+    />
+    <meta property="og:title" content="XenonShelf" />
+    <meta property="og:description" content="Your Xbox 360 collection and wishlist, in the style of the console's dashboard." />
+    <meta name="theme-color" content="#0d1013" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0d1013;
+        --panel: #151a1f;
+        --line: #252c33;
+        --text: #e8ecef;
+        --muted: #98a3ad;
+        --green: #5dc21e;
+        --green-light: #9be15d;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: radial-gradient(60rem 30rem at 50% -10rem, rgb(93 194 30 / 0.16), transparent 70%), var(--bg);
+        color: var(--text);
+        font:
+          17px/1.6 'Titillium Web',
+          'Segoe UI',
+          system-ui,
+          sans-serif;
+      }
+
+      a {
+        color: var(--green-light);
+      }
+
+      .wrap {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 0 16px;
+      }
+
+      header {
+        padding: 96px 0 72px;
+        text-align: center;
+      }
+
+      header img {
+        width: 104px;
+        height: 104px;
+        filter: drop-shadow(0 0 28px rgb(93 194 30 / 0.45));
+      }
+
+      h1 {
+        margin: 20px 0 8px;
+        font-size: clamp(40px, 8vw, 64px);
+        font-weight: 700;
+        line-height: 1.1;
+        letter-spacing: -0.01em;
+      }
+
+      .tagline {
+        max-width: 560px;
+        margin: 0 auto;
+        color: var(--muted);
+        font-size: 20px;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 12px;
+        margin-top: 32px;
+      }
+
+      .button {
+        display: inline-block;
+        padding: 11px 24px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--text);
+        font-weight: 600;
+        text-decoration: none;
+        transition:
+          background 0.15s,
+          border-color 0.15s;
+      }
+
+      .button:hover {
+        border-color: var(--muted);
+      }
+
+      .button.primary {
+        border-color: var(--green);
+        background: var(--green);
+        color: #0b1406;
+      }
+
+      .button.primary:hover {
+        background: var(--green-light);
+        border-color: var(--green-light);
+      }
+
+      section {
+        padding: 56px 0;
+        border-top: 1px solid var(--line);
+      }
+
+      h2 {
+        margin: 0 0 24px;
+        font-size: 28px;
+        font-weight: 700;
+      }
+
+      .features {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 16px;
+      }
+
+      .feature {
+        padding: 20px 22px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--panel);
+      }
+
+      .feature h3 {
+        margin: 0 0 4px;
+        font-size: 18px;
+        font-weight: 600;
+      }
+
+      .feature h3::before {
+        content: '';
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        margin: 0 10px 2px 0;
+        border-radius: 50%;
+        background: var(--green);
+        box-shadow: 0 0 8px var(--green);
+      }
+
+      .feature p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      ol {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        counter-reset: step;
+      }
+
+      ol > li {
+        position: relative;
+        margin-bottom: 28px;
+        padding-left: 48px;
+        counter-increment: step;
+      }
+
+      ol > li::before {
+        content: counter(step);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--green);
+        color: #0b1406;
+        font-weight: 700;
+        line-height: 32px;
+        text-align: center;
+      }
+
+      ol > li strong {
+        display: block;
+        font-size: 18px;
+      }
+
+      ol p {
+        margin: 2px 0 10px;
+        color: var(--muted);
+      }
+
+      .code {
+        position: relative;
+      }
+
+      pre {
+        margin: 0;
+        padding: 16px 18px;
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #090b0d;
+        font:
+          14px/1.55 ui-monospace,
+          'Cascadia Code',
+          Consolas,
+          monospace;
+      }
+
+      code {
+        font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+        font-size: 0.9em;
+      }
+
+      .copy {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        padding: 4px 12px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel);
+        color: var(--muted);
+        font: inherit;
+        font-size: 13px;
+        cursor: pointer;
+      }
+
+      .copy:hover {
+        color: var(--text);
+      }
+
+      .note {
+        margin-top: 8px;
+        color: var(--muted);
+      }
+
+      footer {
+        padding: 40px 0 56px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      footer p {
+        margin: 0 0 8px;
+      }
+
+      @media (max-width: 600px) {
+        header {
+          padding: 64px 0 48px;
+        }
+
+        .tagline {
+          font-size: 18px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="wrap">
+      <img src="favicon.svg" alt="" />
+      <h1>XenonShelf</h1>
+      <p class="tagline">Your Xbox 360 collection and wishlist, in the style of the console's dashboard.</p>
+      <div class="actions">
+        <a class="button primary" href="#install">Install</a>
+        <a class="button" href="https://github.com/k4rm4work/xenonshelf">View on GitHub</a>
+      </div>
+    </header>
+
+    <main>
+      <section>
+        <div class="wrap">
+          <h2>What it does</h2>
+          <div class="features">
+            <div class="feature">
+              <h3>Your whole shelf</h3>
+              <p>Search for a game and its cover and details come from IGDB, or import a whole list at once.</p>
+            </div>
+            <div class="feature">
+              <h3>More than titles</h3>
+              <p>Mark what you have played and note editions, SteelBooks and games you lent out.</p>
+            </div>
+            <div class="feature">
+              <h3>A wishlist</h3>
+              <p>Keep track of what to buy next, next to what you already own.</p>
+            </div>
+            <div class="feature">
+              <h3>Any device at home</h3>
+              <p>Runs on a PC, Mac or NAS and opens in the browser on your phone, tablet or computer.</p>
+            </div>
+            <div class="feature">
+              <h3>Your data stays yours</h3>
+              <p>One folder on your own machine, daily backups, and export to a spreadsheet any time.</p>
+            </div>
+            <div class="feature">
+              <h3>Six languages</h3>
+              <p>English, Español, Português (Brasil), Français, Deutsch and Polski.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="install">
+        <div class="wrap">
+          <h2>Install in three steps</h2>
+          <p class="note" style="margin: -12px 0 28px">
+            You need <a href="https://www.docker.com/products/docker-desktop/">Docker</a> on a computer that stays on at home. No
+            programming, nothing to build.
+          </p>
+          <ol>
+            <li>
+              <strong>Make a folder</strong>
+              <p>Call it <code>xenonshelf</code> and save this in it as <code>docker-compose.yml</code>:</p>
+              <div class="code">
+                <button class="copy" type="button">Copy</button>
+                <pre><code>services:
+  xenonshelf:
+    image: ghcr.io/k4rm4work/xenonshelf:latest
+    container_name: xenonshelf
+    restart: unless-stopped
+    ports:
+      - '8360:3000'
+    volumes:
+      - ./library-data:/data</code></pre>
+              </div>
+            </li>
+            <li>
+              <strong>Start it</strong>
+              <p>
+                Open a terminal in that folder and run the command below. On a NAS, paste the file into a new project or stack in its Docker
+                app.
+              </p>
+              <div class="code">
+                <button class="copy" type="button">Copy</button>
+                <pre><code>docker compose up -d</code></pre>
+              </div>
+            </li>
+            <li>
+              <strong>Open it</strong>
+              <p>
+                Go to <code>http://&lt;your computer's address&gt;:8360</code> in any browser on your network. A short guide helps you add
+                the free IGDB keys for covers and search, and an optional login.
+              </p>
+            </li>
+          </ol>
+          <p class="note">
+            Updating, backups and more options are in the <a href="https://github.com/k4rm4work/xenonshelf#readme">README</a>.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="wrap">
+        <p>
+          XenonShelf is free software under the
+          <a href="https://github.com/k4rm4work/xenonshelf/blob/main/LICENSE">AGPL-3.0-or-later</a>. Questions and ideas go to the
+          <a href="https://github.com/k4rm4work/xenonshelf/discussions">discussions</a>.
+        </p>
+        <p>
+          A fan project, not affiliated with or endorsed by Microsoft. Xbox and Xbox 360 are trademarks of Microsoft. Game data and covers
+          come from IGDB.
+        </p>
+      </div>
+    </footer>
+
+    <script>
+      for (const button of document.querySelectorAll('.copy')) {
+        button.addEventListener('click', async () => {
+          const text = button.nextElementSibling.textContent;
+          try {
+            await navigator.clipboard.writeText(text);
+            button.textContent = 'Copied';
+          } catch {
+            button.textContent = 'Press Ctrl+C';
+            getSelection().selectAllChildren(button.nextElementSibling);
+          }
+          setTimeout(() => (button.textContent = 'Copy'), 1500);
+        });
+      }
+    </script>
+  </body>
+</html>

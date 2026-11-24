@@ -97,6 +97,36 @@ async function copyText(text: string) {
   }
 }
 
+/** How long the tip says the title was copied before offering to copy it again. */
+const COPIED_MS = 2000;
+
+/** The title, copied by a click; its tooltip confirms it rather than a toast. */
+function CopyTitle({ title }: { title: string }) {
+  const { t } = useI18n();
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!copied) return;
+    const timer = setTimeout(() => setCopied(false), COPIED_MS);
+    return () => clearTimeout(timer);
+  }, [copied]);
+
+  return (
+    <button
+      type="button"
+      data-tip={t(copied ? 'game.titleCopied' : 'game.copyTitle')}
+      onClick={async () => {
+        // Back to the offer first, so copying again changes the tip and shows it again.
+        setCopied(false);
+        setCopied(await copyText(searchTitle(title)));
+      }}
+      className="cursor-pointer rounded-md text-left transition-colors hover:text-slate-950 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-x360"
+    >
+      {title}
+    </button>
+  );
+}
+
 function Details({ game }: { game: Game }) {
   const { updateGame, removeGame } = useStore();
   const close = useDialogClose();
@@ -128,16 +158,7 @@ function Details({ game }: { game: Game }) {
         <header className="pr-10">
           <div className="field-label text-x360-dark!">{t(isOwned ? 'game.inCollection' : 'game.onWishlist')}</div>
           <h2 className="text-3xl leading-tight font-light tracking-tight text-slate-800 sm:text-[40px]">
-            <button
-              type="button"
-              data-tip={t('game.copyTitle')}
-              onClick={async () => {
-                if (await copyText(searchTitle(game.title))) toast({ kicker: t('toast.titleCopied'), title: game.title });
-              }}
-              className="cursor-pointer rounded-md text-left transition-colors hover:text-slate-950 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-x360"
-            >
-              {game.title}
-            </button>
+            <CopyTitle title={game.title} />
           </h2>
           {meta.length > 0 && (
             <div className="mt-2 flex flex-wrap items-center gap-x-2 text-[15px] text-slate-500">

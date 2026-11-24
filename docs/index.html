@@ -6,11 +6,15 @@
     <title>XenonShelf</title>
     <meta
       name="description"
-      content="Your Xbox 360 collection and wishlist, in the style of the console's dashboard. Self-hosted with Docker."
+      content="Your Xbox 360 collection and wishlist, styled after the console's dashboard. Free, open source and self-hosted with Docker."
     />
+    <meta property="og:type" content="website" />
     <meta property="og:title" content="XenonShelf" />
-    <meta property="og:description" content="Your Xbox 360 collection and wishlist, in the style of the console's dashboard." />
-    <meta name="theme-color" content="#6eaa0e" />
+    <meta property="og:description" content="Your Xbox 360 collection and wishlist, styled after the console's dashboard." />
+    <meta property="og:url" content="https://k4rm4work.github.io/xenonshelf/" />
+    <meta property="og:image" content="https://k4rm4work.github.io/xenonshelf/og.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#04170a" />
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -18,10 +22,13 @@
     <style>
       /* The same look as the app: an NXE wallpaper behind glossy white trays (see src/index.css). */
       :root {
-        color-scheme: light;
+        color-scheme: dark;
         --ink: #1d2329;
         --ink-soft: #55606b;
+        --on-wall: #fff;
+        --on-wall-soft: rgb(255 255 255 / 0.72);
         --green: #5dc21e;
+        --green-light: #9be15d;
         --green-dark: #2d7a08;
       }
 
@@ -29,150 +36,113 @@
         box-sizing: border-box;
       }
 
+      html {
+        scroll-behavior: smooth;
+      }
+
       body {
         margin: 0;
-        background: #c3c8cd;
-        color: var(--ink);
+        background: #04170a;
+        color: var(--on-wall);
         font:
           16px/1.55 'Titillium Web',
           'Segoe UI',
           system-ui,
           sans-serif;
+        -webkit-font-smoothing: antialiased;
       }
 
-      a {
-        color: var(--green-dark);
+      img {
+        display: block;
+        max-width: 100%;
+        height: auto;
       }
 
-      /* The app's "nxe-green" wallpaper, generated from src/lib/wallpaperArt.ts, dimmed so the
-         page reads calmer than the app. */
+      /* The app's "city-green" wallpaper, generated from src/lib/wallpaperArt.ts. */
       .stage {
         position: fixed;
         inset: 0;
         z-index: -1;
-        container-type: size;
-        filter: brightness(0.62) saturate(1.1);
         background:
           radial-gradient(
-            circle at 74% 54%,
-            transparent 0,
-            transparent 3.69cqmin,
-            rgb(240 245 190 / 0.14) 4.85cqmin,
-            transparent 6cqmin,
-            transparent 9.69cqmin,
-            rgb(240 245 190 / 0.117) 10.85cqmin,
-            transparent 12cqmin,
-            transparent 15.69cqmin,
-            rgb(240 245 190 / 0.093) 16.85cqmin,
-            transparent 18cqmin,
-            transparent 21.69cqmin,
-            rgb(240 245 190 / 0.07) 22.85cqmin,
-            transparent 24cqmin,
-            transparent 27.69cqmin,
-            rgb(240 245 190 / 0.047) 28.85cqmin,
-            transparent 30cqmin
+            ellipse 90% 60% at 62% 100% in oklab,
+            rgb(35 175 75 / 0.7) 0%,
+            rgb(35 175 75 / 0.686) 8.3%,
+            rgb(35 175 75 / 0.648) 16.7%,
+            rgb(35 175 75 / 0.591) 25%,
+            rgb(35 175 75 / 0.519) 33.3%,
+            rgb(35 175 75 / 0.437) 41.7%,
+            rgb(35 175 75 / 0.35) 50%,
+            rgb(35 175 75 / 0.263) 58.3%,
+            rgb(35 175 75 / 0.181) 66.7%,
+            rgb(35 175 75 / 0.109) 75%,
+            rgb(35 175 75 / 0.052) 83.3%,
+            rgb(35 175 75 / 0.014) 91.7%,
+            rgb(35 175 75 / 0) 100%
           ),
           radial-gradient(
-            circle at 6% 18%,
-            transparent 0,
-            transparent 3.59cqmin,
-            rgb(240 245 190 / 0.098) 5.13cqmin,
-            transparent 6.67cqmin,
-            transparent 10.26cqmin,
-            rgb(240 245 190 / 0.084) 11.79cqmin,
-            transparent 13.33cqmin,
-            transparent 16.92cqmin,
-            rgb(240 245 190 / 0.07) 18.46cqmin,
-            transparent 20cqmin,
-            transparent 23.59cqmin,
-            rgb(240 245 190 / 0.056) 25.13cqmin,
-            transparent 26.67cqmin,
-            transparent 30.26cqmin,
-            rgb(240 245 190 / 0.042) 31.79cqmin,
-            transparent 33.33cqmin,
-            transparent 36.92cqmin,
-            rgb(240 245 190 / 0.028) 38.46cqmin,
-            transparent 40cqmin
+            ellipse 50% 45% at 14% 82% in oklab,
+            rgb(25 140 60 / 0.5) 0%,
+            rgb(25 140 60 / 0.49) 8.3%,
+            rgb(25 140 60 / 0.463) 16.7%,
+            rgb(25 140 60 / 0.422) 25%,
+            rgb(25 140 60 / 0.37) 33.3%,
+            rgb(25 140 60 / 0.312) 41.7%,
+            rgb(25 140 60 / 0.25) 50%,
+            rgb(25 140 60 / 0.188) 58.3%,
+            rgb(25 140 60 / 0.13) 66.7%,
+            rgb(25 140 60 / 0.078) 75%,
+            rgb(25 140 60 / 0.037) 83.3%,
+            rgb(25 140 60 / 0.01) 91.7%,
+            rgb(25 140 60 / 0) 100%
           ),
           radial-gradient(
-            ellipse 46% 22% at 55% 42% in oklab,
-            rgb(245 240 60 / 0.65) 0%,
-            rgb(245 240 60 / 0.637) 8.3%,
-            rgb(245 240 60 / 0.602) 16.7%,
-            rgb(245 240 60 / 0.548) 25%,
-            rgb(245 240 60 / 0.481) 33.3%,
-            rgb(245 240 60 / 0.405) 41.7%,
-            rgb(245 240 60 / 0.325) 50%,
-            rgb(245 240 60 / 0.245) 58.3%,
-            rgb(245 240 60 / 0.169) 66.7%,
-            rgb(245 240 60 / 0.102) 75%,
-            rgb(245 240 60 / 0.048) 83.3%,
-            rgb(245 240 60 / 0.013) 91.7%,
-            rgb(245 240 60 / 0) 100%
+            ellipse 50% 40% at 72% 10% in oklab,
+            rgb(20 90 45 / 0.45) 0%,
+            rgb(20 90 45 / 0.441) 8.3%,
+            rgb(20 90 45 / 0.417) 16.7%,
+            rgb(20 90 45 / 0.38) 25%,
+            rgb(20 90 45 / 0.333) 33.3%,
+            rgb(20 90 45 / 0.281) 41.7%,
+            rgb(20 90 45 / 0.225) 50%,
+            rgb(20 90 45 / 0.169) 58.3%,
+            rgb(20 90 45 / 0.117) 66.7%,
+            rgb(20 90 45 / 0.07) 75%,
+            rgb(20 90 45 / 0.033) 83.3%,
+            rgb(20 90 45 / 0.009) 91.7%,
+            rgb(20 90 45 / 0) 100%
           ),
           radial-gradient(
-            ellipse 85% 40% at 52% 42% in oklab,
-            rgb(205 220 10 / 0.75) 0%,
-            rgb(205 220 10 / 0.735) 8.3%,
-            rgb(205 220 10 / 0.694) 16.7%,
-            rgb(205 220 10 / 0.633) 25%,
-            rgb(205 220 10 / 0.556) 33.3%,
-            rgb(205 220 10 / 0.468) 41.7%,
-            rgb(205 220 10 / 0.375) 50%,
-            rgb(205 220 10 / 0.282) 58.3%,
-            rgb(205 220 10 / 0.194) 66.7%,
-            rgb(205 220 10 / 0.117) 75%,
-            rgb(205 220 10 / 0.056) 83.3%,
-            rgb(205 220 10 / 0.015) 91.7%,
-            rgb(205 220 10 / 0) 100%
-          ),
-          radial-gradient(
-            ellipse 40% 45% at 100% 0% in oklab,
-            rgb(95 75 100 / 0.75) 0%,
-            rgb(95 75 100 / 0.735) 8.3%,
-            rgb(95 75 100 / 0.694) 16.7%,
-            rgb(95 75 100 / 0.633) 25%,
-            rgb(95 75 100 / 0.556) 33.3%,
-            rgb(95 75 100 / 0.468) 41.7%,
-            rgb(95 75 100 / 0.375) 50%,
-            rgb(95 75 100 / 0.282) 58.3%,
-            rgb(95 75 100 / 0.194) 66.7%,
-            rgb(95 75 100 / 0.117) 75%,
-            rgb(95 75 100 / 0.056) 83.3%,
-            rgb(95 75 100 / 0.015) 91.7%,
-            rgb(95 75 100 / 0) 100%
-          ),
-          radial-gradient(
-            ellipse 70% 55% at 0% 100% in oklab,
-            rgb(30 65 3 / 0.6) 0%,
-            rgb(30 65 3 / 0.588) 8.3%,
-            rgb(30 65 3 / 0.556) 16.7%,
-            rgb(30 65 3 / 0.506) 25%,
-            rgb(30 65 3 / 0.444) 33.3%,
-            rgb(30 65 3 / 0.374) 41.7%,
-            rgb(30 65 3 / 0.3) 50%,
-            rgb(30 65 3 / 0.226) 58.3%,
-            rgb(30 65 3 / 0.156) 66.7%,
-            rgb(30 65 3 / 0.094) 75%,
-            rgb(30 65 3 / 0.044) 83.3%,
-            rgb(30 65 3 / 0.012) 91.7%,
-            rgb(30 65 3 / 0) 100%
+            ellipse 60% 60% at 0% 0% in oklab,
+            rgb(0 0 0 / 0.5) 0%,
+            rgb(0 0 0 / 0.49) 8.3%,
+            rgb(0 0 0 / 0.463) 16.7%,
+            rgb(0 0 0 / 0.422) 25%,
+            rgb(0 0 0 / 0.37) 33.3%,
+            rgb(0 0 0 / 0.312) 41.7%,
+            rgb(0 0 0 / 0.25) 50%,
+            rgb(0 0 0 / 0.188) 58.3%,
+            rgb(0 0 0 / 0.13) 66.7%,
+            rgb(0 0 0 / 0.078) 75%,
+            rgb(0 0 0 / 0.037) 83.3%,
+            rgb(0 0 0 / 0.01) 91.7%,
+            rgb(0 0 0 / 0) 100%
           ),
           linear-gradient(
             180deg in oklab,
-            rgb(74 140 8 / 1) 0%,
-            rgb(77 142 8 / 1) 8%,
-            rgb(83 148 10 / 1) 16%,
-            rgb(92 155 11 / 1) 24%,
-            rgb(101 162 12 / 1) 32%,
-            rgb(107 168 14 / 1) 40%,
-            rgb(110 170 14 / 1) 48%,
-            rgb(105 163 13 / 1) 56.7%,
-            rgb(92 147 11 / 1) 65.3%,
-            rgb(75 126 9 / 1) 74%,
-            rgb(58 105 7 / 1) 82.7%,
-            rgb(45 89 5 / 1) 91.3%,
-            rgb(40 82 4 / 1) 100%
+            rgb(2 12 6 / 1) 0%,
+            rgb(2 13 7 / 1) 9.2%,
+            rgb(3 17 8 / 1) 18.3%,
+            rgb(4 22 10 / 1) 27.5%,
+            rgb(5 27 12 / 1) 36.7%,
+            rgb(6 31 13 / 1) 45.8%,
+            rgb(6 32 14 / 1) 55%,
+            rgb(6 31 14 / 1) 62.5%,
+            rgb(5 29 13 / 1) 70%,
+            rgb(5 26 12 / 1) 77.5%,
+            rgb(4 23 10 / 1) 85%,
+            rgb(3 21 9 / 1) 92.5%,
+            rgb(3 20 9 / 1) 100%
           );
       }
 
@@ -186,12 +156,12 @@
       }
 
       .page {
-        max-width: 1080px;
+        max-width: 1120px;
         margin: 0 auto;
         padding: 0 32px;
       }
 
-      /* ---------- Top bar: the brand on the left, links on the right ---------- */
+      /* ---------- Top bar ---------- */
 
       .top {
         display: flex;
@@ -201,51 +171,18 @@
         padding: 22px 0;
       }
 
-      .on-wall {
-        color: #fff;
-        text-shadow: 0 1px 4px rgb(0 0 0 / 0.35);
-      }
-
-      .nav {
-        display: flex;
-        align-items: center;
-        gap: 24px;
-      }
-
-      .nav-link {
-        color: #fff;
-        font-size: 15px;
-        font-weight: 600;
-        text-decoration: none;
-        opacity: 0.88;
-      }
-
-      .nav-link:hover {
-        opacity: 1;
-      }
-
-      .nav .button {
-        height: 36px;
-        padding: 0 14px;
-        font-size: 14px;
-        text-shadow: none;
-      }
-
       .brand {
         display: flex;
         align-items: center;
         gap: 10px;
-        color: #fff;
+        color: var(--on-wall);
         text-decoration: none;
-        text-shadow:
-          0 1px 2px rgb(0 0 0 / 0.55),
-          0 0 10px rgb(0 0 0 / 0.25);
       }
 
       .brand svg {
         width: 34px;
         height: 34px;
-        filter: drop-shadow(0 2px 4px rgb(0 0 0 / 0.35));
+        filter: drop-shadow(0 2px 4px rgb(0 0 0 / 0.4));
       }
 
       .brand-name {
@@ -265,55 +202,141 @@
         vertical-align: top;
       }
 
-      /* ---------- Glossy tray, as the app's toolbar and dialogs ---------- */
-
-      .tray {
-        border-radius: 14px;
-        background:
-          linear-gradient(180deg, rgb(255 255 255 / 0.7) 0, rgb(255 255 255 / 0) 2.75rem),
-          linear-gradient(180deg, #fbfcfd 0%, #eef1f4 50%, #e6eaee 100%);
-        border: 1px solid #fff;
-        box-shadow:
-          0 0 0 1px rgb(30 40 50 / 0.06),
-          0 14px 34px -18px rgb(30 40 50 / 0.45);
+      .nav {
+        display: flex;
+        align-items: center;
+        gap: 26px;
       }
 
+      .nav-link {
+        color: var(--on-wall-soft);
+        font-size: 15px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: color 150ms;
+      }
+
+      .nav-link:hover {
+        color: var(--on-wall);
+      }
+
+      .nav .button {
+        height: 36px;
+        padding: 0 14px;
+        font-size: 14px;
+      }
+
+      /* ---------- Buttons, as the app's primary and field controls ---------- */
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        height: 44px;
+        padding: 0 20px;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 600;
+        text-decoration: none;
+        transition:
+          filter 150ms,
+          box-shadow 150ms,
+          background 150ms,
+          transform 120ms;
+      }
+
+      .button:active {
+        transform: translateY(1px);
+      }
+
+      .button svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .button-green {
+        color: #fff;
+        text-shadow: 0 1px 1px rgb(0 0 0 / 0.35);
+        background: linear-gradient(180deg, #a8ea6c 0%, #6fd02a 48%, #4fb012 52%, #5dc21e 100%);
+        box-shadow:
+          0 1px 0 rgb(255 255 255 / 0.6) inset,
+          0 6px 16px -6px rgb(93 194 30 / 0.7);
+      }
+
+      .button-green:hover {
+        filter: brightness(1.06);
+      }
+
+      .field {
+        color: var(--ink);
+        border: 1px solid #cfd6dd;
+        background: linear-gradient(180deg, #ffffff 0%, #f6f8f9 55%, #edf0f3 100%);
+        box-shadow:
+          0 1px 0 #fff inset,
+          0 1px 2px rgb(30 40 50 / 0.08);
+      }
+
+      .field:hover {
+        border-color: #bfc8d1;
+        background: linear-gradient(180deg, #e8ecf0 0%, #f1f4f6 60%, #f7f9fa 100%);
+        box-shadow:
+          0 1px 3px rgb(30 40 50 / 0.16) inset,
+          0 1px 0 rgb(255 255 255 / 0.9);
+      }
+
+      .button:focus-visible,
+      .copy:focus-visible,
+      .nav-link:focus-visible {
+        outline: 2px solid var(--green);
+        outline-offset: 3px;
+      }
+
+      /* ---------- Hero ---------- */
+
       .hero {
-        padding-top: 56px;
+        padding-top: 64px;
         text-align: center;
       }
 
       h1 {
-        max-width: 820px;
-        margin: 0 auto 14px;
-        font-size: clamp(34px, 5.4vw, 54px);
+        max-width: 800px;
+        margin: 0 auto 18px;
+        font-size: clamp(36px, 6vw, 62px);
         font-weight: 600;
-        line-height: 1.08;
-        letter-spacing: -0.015em;
+        line-height: 1.04;
+        letter-spacing: -0.02em;
       }
 
-      .hero p {
+      h1 em {
+        color: var(--green-light);
+        font-style: normal;
+      }
+
+      .lead {
         max-width: 600px;
         margin: 0 auto;
+        color: var(--on-wall-soft);
         font-size: 19px;
-        opacity: 0.94;
       }
 
-      .hero .actions {
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
         justify-content: center;
-        text-shadow: none;
+        gap: 12px;
+        margin-top: 32px;
       }
 
       /* The real app, in a plain browser window at a home-network address. */
       .window {
-        margin-top: 52px;
+        margin-top: 60px;
         overflow: hidden;
-        border: 1px solid rgb(30 40 50 / 0.18);
-        border-radius: 10px;
+        border-radius: 12px;
         background: #e6eaee;
         box-shadow:
-          0 0 0 1px rgb(255 255 255 / 0.35),
-          0 32px 64px -24px rgb(0 0 0 / 0.5);
+          0 0 0 1px rgb(255 255 255 / 0.14),
+          0 0 80px -10px rgb(93 194 30 / 0.35),
+          0 40px 80px -30px rgb(0 0 0 / 0.8);
       }
 
       .window-bar {
@@ -346,153 +369,188 @@
         box-shadow: 0 1px 2px rgb(30 40 50 / 0.14) inset;
       }
 
-      .window img {
-        display: block;
-        width: 100%;
-        height: auto;
-      }
-
-      .actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-top: 26px;
-      }
-
-      /* The app's primary button and its white field-style secondary. */
-      .button {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        height: 42px;
-        padding: 0 18px;
-        border-radius: 8px;
-        font-size: 15px;
-        font-weight: 600;
-        text-decoration: none;
-        transition:
-          filter 150ms,
-          box-shadow 150ms,
-          background 150ms,
-          transform 120ms;
-      }
-
-      .button:active {
-        transform: translateY(1px);
-      }
-
-      .button-green {
-        color: #fff;
-        text-shadow: 0 1px 1px rgb(0 0 0 / 0.35);
-        background: linear-gradient(180deg, #a8ea6c 0%, #6fd02a 48%, #4fb012 52%, #5dc21e 100%);
-        box-shadow:
-          0 1px 0 rgb(255 255 255 / 0.6) inset,
-          0 6px 16px -6px rgb(45 122 8 / 0.7);
-      }
-
-      .button-green:hover {
-        filter: brightness(0.96);
-        box-shadow:
-          0 2px 4px rgb(20 70 0 / 0.3) inset,
-          0 2px 6px -4px rgb(45 122 8 / 0.6);
-      }
-
-      .field {
-        color: var(--ink);
-        border: 1px solid #cfd6dd;
-        background: linear-gradient(180deg, #ffffff 0%, #f6f8f9 55%, #edf0f3 100%);
-        box-shadow:
-          0 1px 0 #fff inset,
-          0 1px 2px rgb(30 40 50 / 0.08);
-      }
-
-      .field:hover {
-        border-color: #bfc8d1;
-        background: linear-gradient(180deg, #e8ecf0 0%, #f1f4f6 60%, #f7f9fa 100%);
-        box-shadow:
-          0 1px 3px rgb(30 40 50 / 0.16) inset,
-          0 1px 0 rgb(255 255 255 / 0.9);
-      }
-
-      .button:focus-visible,
-      .copy:focus-visible {
-        outline: 2px solid var(--green);
-        outline-offset: 2px;
-      }
-
-      .button svg {
-        width: 18px;
-        height: 18px;
-      }
-
       /* ---------- Sections ---------- */
 
       section {
-        margin-top: 88px;
-        scroll-margin-top: 24px;
+        margin-top: 128px;
+        scroll-margin-top: 32px;
       }
 
       h2 {
-        margin: 0 0 24px;
-        font-size: clamp(28px, 3.6vw, 36px);
+        margin: 0 0 16px;
+        font-size: clamp(30px, 4vw, 42px);
         font-weight: 600;
-        line-height: 1.1;
+        line-height: 1.08;
+        letter-spacing: -0.015em;
+      }
+
+      .section-head {
+        max-width: 640px;
+        margin: 0 auto 40px;
         text-align: center;
       }
 
-      /* Features as the rows of a guide menu: hover lights the green bar. */
-      .menu {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 4px;
-        padding: 8px;
+      .section-head p,
+      .showcase-text > p {
+        margin: 0;
+        color: var(--on-wall-soft);
+        font-size: 18px;
       }
 
-      .menu-item {
-        padding: 14px 18px 15px;
-        border-radius: 8px;
+      /* A screenshot beside its text, swapping sides from one to the next. */
+      .showcase {
+        display: grid;
+        grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+        align-items: center;
+        gap: 64px;
+      }
+
+      .showcase-flip {
+        grid-template-columns: minmax(0, 4fr) minmax(0, 6fr);
+      }
+
+      .showcase-flip .showcase-media {
+        order: -1;
+      }
+
+      .checks {
+        margin: 26px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .checks li {
+        display: flex;
+        gap: 12px;
+        padding: 7px 0;
+        font-size: 16px;
+      }
+
+      .checks svg {
+        flex: none;
+        width: 20px;
+        height: 20px;
+        margin-top: 2px;
+        color: var(--green-light);
+      }
+
+      .details {
+        filter: drop-shadow(0 0 1px rgb(255 255 255 / 0.3)) drop-shadow(0 30px 40px rgb(0 0 0 / 0.55));
+      }
+
+      .showcase-media .details {
+        width: 100%;
+      }
+
+      /* A phone in plain dark plastic around the app as it shows at 390px. */
+      .phone {
+        width: 300px;
+        margin: 0 auto;
+        padding: 10px;
+        border-radius: 46px;
+        background: linear-gradient(180deg, #3a424a, #15191d);
+        box-shadow:
+          0 0 0 1px rgb(255 255 255 / 0.16) inset,
+          0 0 0 1px rgb(0 0 0 / 0.6),
+          0 0 80px -10px rgb(93 194 30 / 0.3),
+          0 40px 70px -30px rgb(0 0 0 / 0.85);
+      }
+
+      .phone img {
+        width: 100%;
+        border-radius: 36px;
+      }
+
+      /* ---------- Glossy tray, as the app's toolbar and dialogs ---------- */
+
+      .tray {
+        color: var(--ink);
+        border-radius: 16px;
+        background:
+          linear-gradient(180deg, rgb(255 255 255 / 0.7) 0, rgb(255 255 255 / 0) 2.75rem),
+          linear-gradient(180deg, #fbfcfd 0%, #eef1f4 50%, #e6eaee 100%);
+        border: 1px solid #fff;
+        box-shadow:
+          0 0 0 1px rgb(30 40 50 / 0.06),
+          0 30px 60px -30px rgb(0 0 0 / 0.7);
+      }
+
+      .tray a {
+        color: var(--green-dark);
+      }
+
+      .features {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        padding: 12px;
+      }
+
+      .feature {
+        padding: 22px 22px 24px;
+        border-radius: 10px;
         transition:
           background 120ms,
           box-shadow 120ms;
       }
 
-      .menu-item h3 {
-        margin: 0 0 2px;
-        font-size: 17px;
+      .feature:hover {
+        background: rgb(30 40 50 / 0.04);
+        box-shadow: 0 1px 2px rgb(30 40 50 / 0.1) inset;
+      }
+
+      /* Each icon on a key of the app's green gloss. */
+      .icon {
+        display: grid;
+        place-items: center;
+        width: 40px;
+        height: 40px;
+        margin-bottom: 16px;
+        border-radius: 10px;
+        color: #fff;
+        background: linear-gradient(180deg, #8fdf4f 0%, #62c41f 48%, #4caa10 52%, #57b918 100%);
+        box-shadow:
+          0 1px 0 rgb(255 255 255 / 0.45) inset,
+          0 4px 10px -4px rgb(45 122 8 / 0.6);
+      }
+
+      .icon svg {
+        width: 22px;
+        height: 22px;
+        filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.25));
+      }
+
+      .feature h3 {
+        margin: 0 0 4px;
+        font-size: 18px;
         font-weight: 600;
         line-height: 1.3;
       }
 
-      .menu-item p {
+      .feature p {
         margin: 0;
         color: var(--ink-soft);
+        font-size: 15px;
       }
 
-      .menu-item:hover {
-        color: #fff;
-        text-shadow: 0 1px 1px rgb(0 0 0 / 0.3);
-        background: linear-gradient(180deg, #8de04b 0%, #5dc21e 50%, #4caf10 51%, #5dc21e 100%);
-        box-shadow:
-          0 1px 0 rgb(255 255 255 / 0.45) inset,
-          0 2px 6px -2px rgb(45 122 8 / 0.55);
+      /* ---------- Install ---------- */
+
+      .install {
+        max-width: 860px;
+        margin: 0 auto;
       }
 
-      .menu-item:hover p {
-        color: rgb(255 255 255 / 0.92);
-      }
-
-      /* Install steps */
       .steps {
         margin: 0;
-        padding: 12px 28px 28px;
+        padding: 12px 32px 28px;
         list-style: none;
       }
 
       .steps > li {
         display: grid;
-        grid-template-columns: 30px minmax(0, 1fr);
-        column-gap: 16px;
-        padding: 20px 0 4px;
+        grid-template-columns: 32px minmax(0, 1fr);
+        column-gap: 18px;
+        padding: 22px 0 6px;
       }
 
       .steps > li + li {
@@ -503,9 +561,9 @@
       .chip {
         display: grid;
         place-items: center;
-        width: 30px;
-        height: 30px;
-        border-radius: 6px;
+        width: 32px;
+        height: 32px;
+        border-radius: 7px;
         color: #fff;
         font-weight: 700;
         text-shadow: 0 1px 1px rgb(0 0 0 / 0.3);
@@ -516,7 +574,7 @@
       }
 
       .steps h3 {
-        margin: 2px 0 2px;
+        margin: 3px 0 2px;
         font-size: 19px;
         font-weight: 600;
         line-height: 1.3;
@@ -548,6 +606,7 @@
         margin: 0;
         padding: 14px 16px;
         overflow-x: auto;
+        scrollbar-width: thin;
         font:
           14px/1.6 ui-monospace,
           'Cascadia Code',
@@ -570,82 +629,192 @@
 
       .more {
         margin: 0;
-        padding: 16px 28px;
+        padding: 16px 32px;
         border-top: 1px solid rgb(30 40 50 / 0.1);
         color: var(--ink-soft);
       }
 
+      /* ---------- Footer ---------- */
+
       footer {
-        margin: 44px 0 0;
-        padding: 0 4px 40px;
+        margin-top: 128px;
+        padding: 32px 0 48px;
+        border-top: 1px solid rgb(255 255 255 / 0.1);
+        color: var(--on-wall-soft);
         font-size: 14px;
       }
 
-      footer p {
-        margin: 0 0 6px;
+      .footer-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px 32px;
+        margin-bottom: 20px;
+      }
+
+      .footer-row .brand-name {
+        font-size: 20px;
+      }
+
+      .footer-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 24px;
       }
 
       footer a {
-        color: #fff;
+        color: var(--on-wall);
+        text-decoration: none;
       }
 
-      @media (max-width: 760px) {
+      footer a:hover {
+        text-decoration: underline;
+      }
+
+      footer p {
+        max-width: 720px;
+        margin: 0;
+        font-size: 13px;
+        color: rgb(255 255 255 / 0.5);
+      }
+
+      @media (max-width: 900px) {
+        .showcase,
+        .showcase-flip {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 40px;
+        }
+
+        .showcase-flip .showcase-media {
+          order: 0;
+        }
+
+        .features {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 640px) {
         .page {
           padding: 0 16px;
         }
 
-        .hero {
-          padding-top: 32px;
-        }
-
-        .hero p {
-          font-size: 17px;
-        }
-
-        .window {
-          margin-top: 36px;
-        }
-
-        section {
-          margin-top: 60px;
+        .top {
+          padding: 16px 0;
         }
 
         .nav-link {
           display: none;
         }
 
+        .hero {
+          padding-top: 36px;
+        }
+
+        .lead {
+          font-size: 17px;
+        }
+
+        .actions .button {
+          flex: 1 1 auto;
+          justify-content: center;
+        }
+
+        .window {
+          margin-top: 40px;
+          border-radius: 8px;
+        }
+
         .window-bar {
-          height: 26px;
+          height: 24px;
+          gap: 5px;
+          padding: 0 9px;
+        }
+
+        .window-bar i {
+          width: 8px;
+          height: 8px;
         }
 
         .window-address {
           display: none;
         }
 
-        .menu {
-          grid-template-columns: 1fr;
+        section {
+          margin-top: 88px;
+        }
+
+        .section-head p,
+        .showcase-text > p {
+          font-size: 17px;
+        }
+
+        .phone {
+          width: 250px;
+          border-radius: 40px;
+        }
+
+        .phone img {
+          border-radius: 31px;
+        }
+
+        .features {
+          grid-template-columns: minmax(0, 1fr);
+          padding: 6px;
+        }
+
+        .feature {
+          display: grid;
+          grid-template-columns: 40px minmax(0, 1fr);
+          column-gap: 16px;
+          padding: 16px;
+        }
+
+        .icon {
+          grid-row: span 2;
+          margin: 0;
         }
 
         .steps {
           padding: 4px 18px 20px;
         }
 
+        /* The number sits beside the step's title instead of taking a column. */
         .steps > li {
-          grid-template-columns: minmax(0, 1fr);
+          display: block;
         }
 
         .chip {
-          margin-bottom: 8px;
+          float: left;
+          width: 28px;
+          height: 28px;
+          margin-right: 12px;
+          font-size: 15px;
+        }
+
+        .steps h3 {
+          margin: 0 0 8px;
+          line-height: 28px;
         }
 
         .more {
           padding: 14px 18px;
         }
+
+        footer {
+          margin-top: 88px;
+        }
       }
 
       @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+
         .button,
-        .menu-item {
+        .feature,
+        .nav-link {
           transition: none;
         }
       }
@@ -654,6 +823,63 @@
   <body>
     <div class="stage" aria-hidden="true"></div>
 
+    <!-- The ring mark, drawn once and used by the top bar and the footer. -->
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <defs>
+        <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#48525b" />
+          <stop offset=".5" stop-color="#262c32" />
+          <stop offset="1" stop-color="#121518" />
+        </linearGradient>
+        <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#e9edf0" />
+          <stop offset=".5" stop-color="#8e98a1" />
+          <stop offset="1" stop-color="#3a424a" />
+        </linearGradient>
+        <linearGradient id="dim" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#6a747d" />
+          <stop offset="1" stop-color="#454d55" />
+        </linearGradient>
+        <radialGradient id="lit" cx="32" cy="32" r="22" gradientUnits="userSpaceOnUse">
+          <stop offset=".6" stop-color="#5fc21e" />
+          <stop offset="1" stop-color="#d4ff9e" />
+        </radialGradient>
+        <radialGradient id="button" cx="45%" cy="35%" r="70%">
+          <stop offset="0" stop-color="#ffffff" />
+          <stop offset=".6" stop-color="#d3d9de" />
+          <stop offset="1" stop-color="#8e98a1" />
+        </radialGradient>
+        <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#fff" stop-opacity=".22" />
+          <stop offset="1" stop-color="#fff" stop-opacity="0" />
+        </linearGradient>
+        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="2.5" />
+        </filter>
+        <path id="q0" d="M14.13 29.81 A18 18 0 0 1 29.81 14.13" />
+        <path id="q1" d="M34.19 14.13 A18 18 0 0 1 49.87 29.81" />
+        <path id="q2" d="M49.87 34.19 A18 18 0 0 1 34.19 49.87" />
+        <path id="q3" d="M29.81 49.87 A18 18 0 0 1 14.13 34.19" />
+        <g id="ring">
+          <circle cx="32" cy="32" r="29" fill="url(#body)" stroke="url(#rim)" stroke-width="2" />
+          <ellipse cx="32" cy="17" rx="20" ry="11" fill="url(#gloss)" />
+          <g fill="none" stroke-width="7" stroke="url(#dim)">
+            <use href="#q1" />
+            <use href="#q2" />
+            <use href="#q3" />
+          </g>
+          <use href="#q0" fill="none" stroke="#b6f37a" stroke-width="9" filter="url(#glow)" opacity=".8" />
+          <use href="#q0" fill="none" stroke="url(#lit)" stroke-width="7" />
+          <circle cx="32" cy="32" r="8" fill="url(#button)" stroke="#2a3036" stroke-width="1.2" />
+        </g>
+        <!-- A tick in a ring, the app's "completed" icon. -->
+        <g id="check" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="10" cy="10" r="7" />
+          <path d="m6.75 10.25 2.25 2.25 4.25-4.5" />
+        </g>
+      </defs>
+    </svg>
+
     <div class="page">
       <header class="top">
         <a class="brand" href="#">
@@ -661,32 +887,35 @@
           <span class="brand-name"><b>Xenon</b>Shelf<small>TM</small></span>
         </a>
         <nav class="nav" aria-label="Sections">
-          <a class="nav-link on-wall" href="#features-section">Features</a>
-          <a class="nav-link on-wall" href="#install">Install</a>
-          <a class="button field" href="https://github.com/k4rm4work/xenonshelf">GitHub</a>
+          <a class="nav-link" href="#features">Features</a>
+          <a class="nav-link" href="#install">Install</a>
+          <a class="button field" href="https://github.com/k4rm4work/xenonshelf">
+            <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><use href="#github" /></svg>
+            GitHub
+          </a>
         </nav>
       </header>
 
       <main>
         <div class="hero">
-          <div class="on-wall">
-            <h1>Your Xbox 360 collection and wishlist, in the style of the console's dashboard.</h1>
-            <p>
-              XenonShelf runs on a computer or NAS in your home and opens in any browser on your network. Free, open source, and your data
-              never leaves your house.
-            </p>
-            <div class="actions">
-              <a class="button button-green" href="#install">Install</a>
-              <a class="button field" href="https://github.com/k4rm4work/xenonshelf">
-                <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                  <path
-                    d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"
-                  />
-                </svg>
-                View on GitHub
-              </a>
-            </div>
+          <h1>Your Xbox 360 collection, <em>dashboard style</em></h1>
+          <p class="lead">
+            Keep track of every game you own and every one you're after, in an app styled after the console's dashboard. It runs at home and
+            opens in any browser on your network.
+          </p>
+          <div class="actions">
+            <a class="button button-green" href="#install">Install with Docker</a>
+            <a class="button field" href="https://github.com/k4rm4work/xenonshelf">
+              <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                <path
+                  id="github"
+                  d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"
+                />
+              </svg>
+              View on GitHub
+            </a>
           </div>
+
           <div class="window">
             <div class="window-bar" aria-hidden="true">
               <i></i><i></i><i></i>
@@ -696,87 +925,186 @@
               src="app.webp"
               width="1440"
               height="900"
-              alt="XenonShelf showing a collection of 18 games as Xbox 360 cases on a green dashboard wallpaper, with search, sort, filters and view options above them"
+              alt="XenonShelf showing a collection of 18 games as Xbox 360 cases with their covers, with search, sort, filters and view options above them"
             />
           </div>
-          <!-- The ring mark for the brand in the top bar. -->
-          <svg width="0" height="0" style="position: absolute" aria-hidden="true">
-            <defs>
-              <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stop-color="#48525b" />
-                <stop offset=".5" stop-color="#262c32" />
-                <stop offset="1" stop-color="#121518" />
-              </linearGradient>
-              <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stop-color="#e9edf0" />
-                <stop offset=".5" stop-color="#8e98a1" />
-                <stop offset="1" stop-color="#3a424a" />
-              </linearGradient>
-              <linearGradient id="dim" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stop-color="#6a747d" />
-                <stop offset="1" stop-color="#454d55" />
-              </linearGradient>
-              <radialGradient id="lit" cx="32" cy="32" r="22" gradientUnits="userSpaceOnUse">
-                <stop offset=".6" stop-color="#5fc21e" />
-                <stop offset="1" stop-color="#d4ff9e" />
-              </radialGradient>
-              <radialGradient id="button" cx="45%" cy="35%" r="70%">
-                <stop offset="0" stop-color="#ffffff" />
-                <stop offset=".6" stop-color="#d3d9de" />
-                <stop offset="1" stop-color="#8e98a1" />
-              </radialGradient>
-              <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stop-color="#fff" stop-opacity=".22" />
-                <stop offset="1" stop-color="#fff" stop-opacity="0" />
-              </linearGradient>
-              <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="2.5" />
-              </filter>
-              <path id="q0" d="M14.13 29.81 A18 18 0 0 1 29.81 14.13" />
-              <path id="q1" d="M34.19 14.13 A18 18 0 0 1 49.87 29.81" />
-              <path id="q2" d="M49.87 34.19 A18 18 0 0 1 34.19 49.87" />
-              <path id="q3" d="M29.81 49.87 A18 18 0 0 1 14.13 34.19" />
-              <!-- The still mark, player 1 lit, for the brand in the top bar. -->
-              <g id="ring">
-                <circle cx="32" cy="32" r="29" fill="url(#body)" stroke="url(#rim)" stroke-width="2" />
-                <ellipse cx="32" cy="17" rx="20" ry="11" fill="url(#gloss)" />
-                <g fill="none" stroke-width="7" stroke="url(#dim)">
-                  <use href="#q1" />
-                  <use href="#q2" />
-                  <use href="#q3" />
-                </g>
-                <use href="#q0" fill="none" stroke="#b6f37a" stroke-width="9" filter="url(#glow)" opacity=".8" />
-                <use href="#q0" fill="none" stroke="url(#lit)" stroke-width="7" />
-                <circle cx="32" cy="32" r="8" fill="url(#button)" stroke="#2a3036" stroke-width="1.2" />
-              </g>
-            </defs>
-          </svg>
         </div>
 
-        <section id="features-section" aria-labelledby="features">
-          <h2 id="features" class="on-wall">What it does</h2>
-          <div class="tray menu">
-            <div class="menu-item">
-              <h3>Your whole shelf</h3>
-              <p>Search for a game and its cover and details come from IGDB, or import a whole list at once.</p>
+        <section class="showcase" aria-labelledby="details-title">
+          <div class="showcase-text">
+            <h2 id="details-title">Every copy, every detail</h2>
+            <p>Open a game to see what IGDB knows about it, and note what only you know about your copy.</p>
+            <ul class="checks">
+              <li>
+                <svg viewBox="0 0 20 20" aria-hidden="true"><use href="#check" /></svg>Editions, SteelBooks, region, condition and what you
+                paid
+              </li>
+              <li>
+                <svg viewBox="0 0 20 20" aria-hidden="true"><use href="#check" /></svg>Who borrowed which game, and since when
+              </li>
+              <li>
+                <svg viewBox="0 0 20 20" aria-hidden="true"><use href="#check" /></svg>Play status, your own rating and a few words of
+                review
+              </li>
+              <li>
+                <svg viewBox="0 0 20 20" aria-hidden="true"><use href="#check" /></svg>Critic score, time to beat, series and studio
+              </li>
+            </ul>
+          </div>
+          <div class="showcase-media">
+            <img
+              class="details"
+              src="details.webp"
+              width="960"
+              height="691"
+              loading="lazy"
+              alt="The details of BioShock: its cover, a critic score of 92, a five-star rating, the tag favourites, a short description, a review, and the studio and time to beat"
+            />
+          </div>
+        </section>
+
+        <section class="showcase showcase-flip" aria-labelledby="devices-title">
+          <div class="showcase-text">
+            <h2 id="devices-title">Check your shelf from the shop</h2>
+            <p>
+              The same library on your PC, tablet and phone. Look up what you own before you buy a game twice, then add it with one tap.
+              Over a VPN it works away from home too.
+            </p>
+            <ul class="checks">
+              <li>
+                <svg viewBox="0 0 20 20" aria-hidden="true"><use href="#check" /></svg>Runs on a PC, Mac, NAS or Raspberry Pi
+              </li>
+              <li>
+                <svg viewBox="0 0 20 20" aria-hidden="true"><use href="#check" /></svg>One folder holds it all, with a backup every day
+              </li>
+              <li>
+                <svg viewBox="0 0 20 20" aria-hidden="true"><use href="#check" /></svg>An optional login for the rest of your household
+              </li>
+            </ul>
+          </div>
+          <div class="showcase-media">
+            <div class="phone">
+              <img
+                src="phone.webp"
+                width="390"
+                height="844"
+                loading="lazy"
+                alt="XenonShelf on a phone, showing the collection as two columns of cases"
+              />
             </div>
-            <div class="menu-item">
-              <h3>More than titles</h3>
-              <p>Mark what you have played and note editions, SteelBooks and games you lent out.</p>
+          </div>
+        </section>
+
+        <section id="features" aria-labelledby="features-title">
+          <div class="section-head">
+            <h2 id="features-title">Everything a shelf needs</h2>
+          </div>
+          <div class="tray features">
+            <div class="feature">
+              <span class="icon">
+                <svg
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="8.75" cy="8.75" r="5.25" />
+                  <path d="m12.75 12.75 3.75 3.75" />
+                </svg>
+              </span>
+              <h3>Search and import</h3>
+              <p>Find a game on IGDB and its cover and details come along, or paste a whole list at once.</p>
             </div>
-            <div class="menu-item">
+            <div class="feature">
+              <span class="icon">
+                <svg
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="m10 2.75 2.25 4.6 5 .72-3.62 3.53.85 4.98L10 14.23l-4.48 2.35.85-4.98L2.75 8.07l5-.72Z" />
+                </svg>
+              </span>
               <h3>A wishlist</h3>
-              <p>Keep track of what to buy next, next to what you already own.</p>
+              <p>What to buy next, how badly you want it, and which orders are on their way.</p>
             </div>
-            <div class="menu-item">
-              <h3>Any device at home</h3>
-              <p>Runs on a PC, Mac or NAS and opens in the browser on your phone, tablet or computer.</p>
+            <div class="feature">
+              <span class="icon">
+                <svg
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <rect x="4.75" y="3" width="10.5" height="14" rx="1.25" />
+                  <path d="M4.75 6.75h10.5" />
+                </svg>
+              </span>
+              <h3>Cases, covers or a list</h3>
+              <p>Browse 3D cases, a wall of covers or a compact list, at any size.</p>
             </div>
-            <div class="menu-item">
-              <h3>Your data stays yours</h3>
-              <p>One folder on your own machine, daily backups, and export to a spreadsheet any time.</p>
+            <div class="feature">
+              <span class="icon">
+                <svg
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M3 4.5v4.38a1.5 1.5 0 0 0 .44 1.06l6.62 6.62a1.5 1.5 0 0 0 2.12 0l4.38-4.38a1.5 1.5 0 0 0 0-2.12L9.94 3.44A1.5 1.5 0 0 0 8.88 3H4.5A1.5 1.5 0 0 0 3 4.5Z"
+                  />
+                  <circle cx="6.75" cy="6.75" r="1.25" />
+                </svg>
+              </span>
+              <h3>Tags and filters</h3>
+              <p>Your own tags work as collections; filter by status, year, format and more.</p>
             </div>
-            <div class="menu-item">
+            <div class="feature">
+              <span class="icon">
+                <svg
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M10 3v9.5M6 8.75l4 4 4-4M3.5 13.5v2a1.5 1.5 0 0 0 1.5 1.5h10a1.5 1.5 0 0 0 1.5-1.5v-2" />
+                </svg>
+              </span>
+              <h3>Your data, your files</h3>
+              <p>Daily backups, an export that opens in Excel, and a full backup you can restore.</p>
+            </div>
+            <div class="feature">
+              <span class="icon">
+                <svg
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="10" cy="10" r="7" />
+                  <path d="M3 10h14M10 3c-2.2 2-3.2 4.3-3.2 7s1 5 3.2 7M10 3c2.2 2 3.2 4.3 3.2 7s-1 5-3.2 7" />
+                </svg>
+              </span>
               <h3>Six languages</h3>
               <p>English, Español, Português (Brasil), Français, Deutsch and Polski.</p>
             </div>
@@ -784,16 +1112,22 @@
         </section>
 
         <section id="install" aria-labelledby="install-title">
-          <h2 id="install-title" class="on-wall">Install in three steps</h2>
-          <div class="tray">
+          <div class="section-head">
+            <h2 id="install-title">Up and running in three steps</h2>
+            <p>
+              All it needs is Docker on a computer that stays on at home: a Windows PC, a Mac, a Linux box, a Synology, QNAP or Unraid NAS,
+              or a Raspberry Pi 4. No programming, nothing to build.
+            </p>
+          </div>
+          <div class="tray install">
             <ol class="steps">
               <li>
                 <span class="chip">1</span>
                 <div>
                   <h3>Make a folder</h3>
                   <p>
-                    You need <a href="https://www.docker.com/products/docker-desktop/">Docker</a> on a computer that stays on at home. Make
-                    a folder called <code>xenonshelf</code> and save this in it as <code>docker-compose.yml</code>:
+                    Install <a href="https://www.docker.com/products/docker-desktop/">Docker</a> if you don't have it yet. Make a folder
+                    called <code>xenonshelf</code> and save this in it as <code>docker-compose.yml</code>:
                   </p>
                   <div class="code">
                     <button class="copy field" type="button">Copy</button>
@@ -841,11 +1175,19 @@
         </section>
       </main>
 
-      <footer class="on-wall">
-        <p>
-          Free software under the <a href="https://github.com/k4rm4work/xenonshelf/blob/main/LICENSE">AGPL-3.0-or-later</a>. Questions and
-          ideas go to the <a href="https://github.com/k4rm4work/xenonshelf/discussions">discussions</a>.
-        </p>
+      <footer>
+        <div class="footer-row">
+          <a class="brand" href="#">
+            <svg viewBox="0 0 64 64" aria-hidden="true"><use href="#ring" /></svg>
+            <span class="brand-name"><b>Xenon</b>Shelf</span>
+          </a>
+          <nav class="footer-links" aria-label="Project">
+            <a href="https://github.com/k4rm4work/xenonshelf">GitHub</a>
+            <a href="https://github.com/k4rm4work/xenonshelf/discussions">Discussions</a>
+            <a href="https://github.com/k4rm4work/xenonshelf/issues">Report a problem</a>
+            <a href="https://github.com/k4rm4work/xenonshelf/blob/main/LICENSE">AGPL-3.0 license</a>
+          </nav>
+        </div>
         <p>
           A fan project, not affiliated with or endorsed by Microsoft. Xbox and Xbox 360 are trademarks of Microsoft. Game data and covers
           come from IGDB; the covers belong to their publishers.

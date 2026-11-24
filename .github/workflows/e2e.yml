@@ -1,8 +1,11 @@
 name: End-to-end tests
 
-# Run in a real browser on pull requests and on demand; `npm run e2e` runs the same locally.
+# Run in a real browser on pushes to staging, on pull requests and on demand; `npm run e2e`
+# runs the same locally.
 on:
   workflow_dispatch:
+  push:
+    branches: [staging]
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened, ready_for_review]

@@ -1,0 +1,187 @@
+import { useEffect, useState } from 'react';
+import { coverSrc } from '../lib/cover';
+import { markAsOwned, toggleOrdered, withCopy } from '../lib/games';
+import { useI18n } from '../lib/i18n';
+import { CAN_EDIT, useStore } from '../lib/store';
+import { useToast } from '../lib/toast';
+import type { Game } from '../types';
+import { Button } from './Button';
+import { CopySheet, LoanNotice, PlayBar } from './CopySheet';
+import { CloseButton, Dialog, useDialogClose } from './Dialog';
+import { GameBox } from './GameBox';
+import { GameFactList, GameSummary } from './GameFacts';
+import { ChevronLeftIcon, ChevronRightIcon, TrashIcon, TruckIcon } from './icons';
+import { Shortcut } from './Shortcut';
+
+type Props = {
+  game: Game;
+  onClose: () => void;
+  /** Open the neighbouring game in the list; absent at either end. */
+  onPrev?: () => void;
+  onNext?: () => void;
+};
+
+/** Arrow keys belong to whatever is focused when it uses them itself: text, radio groups, menus. */
+const ownsArrowKeys = (target: EventTarget | null) =>
+  target instanceof Element &&
+  !!target.closest('input, textarea, select, [role=radiogroup], [role=listbox], [role=menu], [aria-expanded=true]');
+
+export function GameDetailsDialog({ game, onClose, onPrev, onNext }: Props) {
+  const { t } = useI18n();
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || ownsArrowKeys(e.target)) return;
+      if (e.key === 'ArrowLeft') onPrev?.();
+      else if (e.key === 'ArrowRight') onNext?.();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onPrev, onNext]);
+
+  return (
+    <Dialog
+      onClose={onClose}
+      label={game.title}
+      backdropImage={coverSrc(game)}
+      aside={
+        <>
+          <StepButton side="prev" label={t('game.prev')} onClick={onPrev} />
+          <StepButton side="next" label={t('game.next')} onClick={onNext} />
+        </>
+      }
+    >
+      {/* Keyed so a draft note or a pending delete never carries over to the next game. */}
+      <Details key={game.id} game={game} />
+    </Dialog>
+  );
+}
+
+/** Round arrow fixed at the screen edge beside the panel, with its keycap under it. */
+function StepButton({ side, label, onClick }: { side: 'prev' | 'next'; label: string; onClick?: () => void }) {
+  const key = side === 'prev' ? 'ArrowLeft' : 'ArrowRight';
+  return (
+    <div className={`step-button step-button-${side}`}>
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={!onClick}
+        aria-label={label}
+        data-tip={label}
+        aria-keyshortcuts={key}
+        className="nxe-field grid size-11 place-items-center rounded-full! text-slate-600 hover:text-slate-900 disabled:opacity-0 [&>svg]:size-5"
+      >
+        {side === 'prev' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+      </button>
+      {onClick && <Shortcut keyName={side === 'prev' ? '←' : '→'} />}
+    </div>
+  );
+}
+
+function Details({ game }: { game: Game }) {
+  const { updateGame, removeGame } = useStore();
+  const close = useDialogClose();
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const { t, rich, genre, date } = useI18n();
+
+  const toast = useToast();
+
+  // Small edits save quietly; only moving a game in or out of a list gets a toast.
+  const update = (patch: Partial<Game>) => updateGame({ ...game, ...patch });
+  const isOwned = game.list === 'owned';
+  // On the wishlist: a wish, or a game owned whose case is still hunted for.
+  const wished = !isOwned || !!game.wanted;
+  const meta = [game.releaseYear, ...(game.genres ?? []).map(genre)].filter(Boolean);
+
+  return (
+    <div className="gloss relative grid gap-x-10 gap-y-6 rounded-3xl p-6 sm:grid-cols-[240px_1fr] sm:p-9">
+      <CloseButton className="absolute top-4 right-4" />
+
+      {/* Facts sit under the case; on a phone, where the case heads the page, they follow the title instead. */}
+      <div className="flex min-w-0 flex-col gap-6">
+        <GameBox game={game} flat className="case-spin-in mx-auto w-48 self-start text-[15px] sm:w-full" />
+        <div className="hidden sm:block">
+          <GameFactList game={game} />
+        </div>
+      </div>
+
+      <div className="flex min-w-0 flex-col">
+        <header className="pr-10">
+          <div className="field-label text-x360-dark!">{t(isOwned ? 'game.inCollection' : 'game.onWishlist')}</div>
+          <h2 className="text-3xl leading-tight font-light tracking-tight text-slate-800 sm:text-[40px]">{game.title}</h2>
+          {meta.length > 0 && (
+            <div className="mt-2 flex flex-wrap items-center gap-x-2 text-[15px] text-slate-500">
+              {meta.map((m, i) => (
+                <span key={m} className="flex items-center gap-2">
+                  {i > 0 && <span className="text-slate-300">·</span>}
+                  {m}
+                </span>
+              ))}
+            </div>
+          )}
+          <PlayBar game={game} onChange={update} disabled={!CAN_EDIT} />
+        </header>
+
+        <LoanNotice game={game} onChange={update} disabled={!CAN_EDIT} />
+        <GameSummary game={game} />
+        <div className="mt-6 sm:hidden">
+          <GameFactList game={game} />
+        </div>
+
+        {wished && game.orderedAt && (
+          <div className="notice notice-sky mt-6">
+            <TruckIcon />
+            <span>{rich('game.orderedOn', { date: date(game.orderedAt), gotIt: <b>{t('game.gotIt')}</b> })}</span>
+          </div>
+        )}
+
+        <div className="mt-7">
+          <CopySheet game={game} onChange={update} disabled={!CAN_EDIT} />
+        </div>
+
+        <footer className="mt-auto flex flex-wrap items-center gap-3 pt-8">
+          <span className={`text-xs text-slate-400 ${isOwned ? 'ml-auto' : ''}`}>{t('game.addedOn', { date: date(game.addedAt) })}</span>
+          {/* A field like the rest of the card, kept quiet until hovered or asking to confirm. */}
+          {CAN_EDIT && (
+            <button
+              type="button"
+              onClick={async () => {
+                if (!confirmDelete) return setConfirmDelete(true);
+                await close();
+                if (await removeGame(game.id)) toast({ kicker: t('toast.removed'), title: game.title, undoable: true });
+              }}
+              onBlur={() => setConfirmDelete(false)}
+              className={`nxe-field flex h-8 items-center gap-1.5 px-3 text-xs font-semibold transition [&>svg]:size-3.5 ${
+                confirmDelete ? 'delete-confirm' : 'text-slate-500 hover:text-rose-600'
+              }`}
+            >
+              <TrashIcon />
+              <span className="nxe-label">{t(confirmDelete ? 'game.confirmDelete' : 'game.delete')}</span>
+            </button>
+          )}
+
+          {CAN_EDIT && wished && (
+            <div className="ml-auto flex flex-wrap gap-2">
+              <Button variant="secondary" onClick={() => updateGame(toggleOrdered(game))}>
+                <TruckIcon />
+                {t(game.orderedAt ? 'game.cancelOrder' : 'game.markOrdered')}
+              </Button>
+              <Button
+                onClick={async () =>
+                  (await updateGame(isOwned ? withCopy(game) : markAsOwned(game), { undoable: true })) &&
+                  toast({
+                    kicker: t('toast.achievement'),
+                    title: t('toast.owned', { title: game.title }),
+                    undoable: true,
+                  })
+                }
+              >
+                {t('game.gotIt')}
+              </Button>
+            </div>
+          )}
+        </footer>
+      </div>
+    </div>
+  );
+}

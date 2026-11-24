@@ -1,0 +1,10 @@
+# Built, installed or user data: not ours to format.
+dist
+node_modules
+data
+library-data
+public
+package-lock.json
+e2e/.data
+test-results
+playwright-report

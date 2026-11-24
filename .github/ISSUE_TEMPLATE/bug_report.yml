@@ -1,0 +1,50 @@
+name: Report a problem
+description: Something doesn't work or looks wrong.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time! A few details help find the cause quickly.
+        You can write in English or Polish.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead.
+      placeholder: I added a game from the search, but its cover stayed empty…
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How to make it happen again
+      description: Optional, but it helps a lot.
+      placeholder: |
+        1. Open the wishlist
+        2. Click "add game"
+        3. …
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: Drag images here if they show the problem.
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: Filled in when you report from the app; otherwise see the bottom of the Settings panel.
+      placeholder: 0.1.0 (abc1234)
+  - type: input
+    id: device
+    attributes:
+      label: Device and browser
+      placeholder: iPhone 13, Safari / Windows 11, Chrome
+  - type: dropdown
+    id: install
+    attributes:
+      label: How do you run XenonShelf?
+      options:
+        - Docker on a PC or Mac
+        - Docker on a NAS or home server
+        - Something else

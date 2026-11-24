@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
+    "target": "ES2022",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    // Node runs the server and scripts straight from .ts by stripping types.
+    "allowImportingTsExtensions": true,
+    "erasableSyntaxOnly": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "types": ["node"]
+  },
+  "include": ["vite.config.ts", "vite-plugin-library-api.ts", "server", "scripts"]
+}

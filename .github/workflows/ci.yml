@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [main, 'audit/**']
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Audit all dependencies
+        run: npm audit --audit-level=high
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      # The image carries only part of src; building it catches a module left out.
+      - run: docker build -t xenonshelf-ci .
+      # As on a new server: the data folder belongs to root, and the image must make it its own.
+      - name: Server starts in the image
+        run: |
+          mkdir ci-data && sudo chown root:root ci-data
+          docker run -d --name xs -p 3000:3000 -v "$PWD/ci-data:/data" xenonshelf-ci
+          for i in $(seq 1 20); do curl -fs http://localhost:3000/api/games > /dev/null && break; sleep 1; done
+          curl -fs http://localhost:3000/api/health && test -f ci-data/games.json || { docker logs xs; exit 1; }
+
+  # Every change on main that passes ships as a ready image, so a server needs no git and
+  # no build: docker compose pulls ghcr.io/k4rm4work/xenonshelf. Both common processors:
+  # PCs and most NAS boxes (amd64), Raspberry Pi and ARM NAS boxes (arm64).
+  publish:
+    needs: verify
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=edge,enable=${{ github.ref == 'refs/heads/main' }}
+            type=sha,format=short
+            type=semver,pattern={{version}},enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  release:
+    needs: publish
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create GitHub release notes
+        run: gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --generate-notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

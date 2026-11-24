@@ -1,0 +1,4510 @@
+@import 'tailwindcss';
+
+@theme {
+  /* Titillium Web, bundled from @fontsource (see main.tsx): squared, compact and openly
+     licensed, so the app can be served anywhere. */
+  --font-sans: 'Titillium Web', 'Segoe UI', system-ui, sans-serif;
+  --color-x360: #5dc21e;
+  --color-x360-light: #9be15d;
+  --color-x360-dark: #2d7a08;
+  --color-blade: #f4f6f8;
+}
+
+/* Tailwind 4 leaves buttons with the arrow; everything that can be pressed gets the
+   pointing hand instead, so no control has to remember it. */
+@layer base {
+  :is(
+    button,
+    [role='button'],
+    [role='tab'],
+    [role='option'],
+    [role='radio'],
+    [role='slider'],
+    summary,
+    select,
+    label:has(> input[type='checkbox'])
+  ):not(:disabled, [aria-disabled='true']) {
+    cursor: pointer;
+  }
+}
+
+/* Small crosses that take a filter or a tag off: drawn small, pressed in a 40px square
+   around them, as a finger needs. */
+.hit-area::before,
+.filter-chip button::before,
+.tag-chip button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 40px;
+  height: 40px;
+  translate: -50% -50%;
+}
+
+body {
+  min-height: 100vh;
+  color: #1d2329;
+  background: #c3c8cd;
+}
+
+/* ---------- Wallpaper (see Backdrop.tsx) ---------- */
+
+/* Fixed behind the page. The gradient is the stand-in when no wallpaper files exist. */
+.nxe-stage {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  /* The drawn wallpapers size their rings in cqmin of this box. */
+  container-type: size;
+}
+
+/* A faint grain over the wallpaper: long, slow gradients otherwise show steps. Blended
+   normally: a blend mode would make phones mix this full-screen layer on every frame. */
+.nxe-stage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* One wallpaper; a newer one stacks on top and fades in (see Backdrop.tsx). */
+.nxe-stage-layer {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(70vw 50vh at 72% 30%, rgb(214 240 90 / 0.5), transparent 70%),
+    linear-gradient(180deg, #6f9e0c 0%, #8dbd14 45%, #4f7d08 100%);
+  background-size: cover;
+  background-position: center;
+}
+
+.nxe-stage-layer.is-entering {
+  animation: nxe-fade-in 420ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nxe-stage-layer.is-entering {
+    animation: none;
+  }
+}
+
+/* Glossy panel used by toolbar, dialogs and headers. */
+.gloss {
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.7) 0, rgb(255 255 255 / 0) 2.75rem),
+    linear-gradient(180deg, rgb(250 251 252 / 0.96) 0%, rgb(232 236 240 / 0.94) 100%);
+  border: 1px solid rgb(255 255 255 / 0.9);
+  box-shadow:
+    0 1px 0 rgb(255 255 255) inset,
+    0 10px 30px -12px rgb(30 40 50 / 0.35);
+}
+
+.gloss-green {
+  background: linear-gradient(180deg, #a8ea6c 0%, #6fd02a 48%, #4fb012 52%, #5dc21e 100%);
+  color: white;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 0.35);
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.6) inset,
+    0 6px 16px -6px rgb(45 122 8 / 0.7);
+}
+
+/* ---------- NXE controls ---------- */
+
+/* Translucent tray holding the toolbar, like the NXE guide panels. */
+.nxe-tray {
+  border-radius: 14px;
+  /* Opaque panel: no backdrop blur, which was costly while scrolling over the cases. */
+  background: linear-gradient(180deg, #fbfcfd 0%, #eef1f4 50%, #e6eaee 100%);
+  border: 1px solid #fff;
+  box-shadow:
+    0 0 0 1px rgb(30 40 50 / 0.06),
+    0 14px 34px -18px rgb(30 40 50 / 0.45);
+}
+
+.nxe-field {
+  border-radius: 8px;
+  background: linear-gradient(180deg, #ffffff 0%, #f6f8f9 55%, #edf0f3 100%);
+  border: 1px solid #cfd6dd;
+  box-shadow:
+    0 1px 0 #fff inset,
+    0 1px 2px rgb(30 40 50 / 0.08);
+  transition:
+    border-color 150ms,
+    box-shadow 150ms;
+}
+
+/* Hover and focus press the control into the tray instead of outlining it. */
+.nxe-field:hover,
+.nxe-field:focus-within {
+  border-color: #bfc8d1;
+  background: linear-gradient(180deg, #e8ecf0 0%, #f1f4f6 60%, #f7f9fa 100%);
+  box-shadow:
+    0 1px 3px rgb(30 40 50 / 0.16) inset,
+    0 1px 0 rgb(255 255 255 / 0.9);
+}
+
+/* ---------- Button states ---------- */
+
+.gloss-green,
+button.nxe-field {
+  cursor: pointer;
+  transition:
+    filter 150ms,
+    box-shadow 150ms,
+    transform 120ms,
+    border-color 150ms,
+    background 150ms;
+}
+
+/* Primary: hover presses the button in (shorter drop shadow, inner shade),
+   clicking pushes it all the way down. Same language as the fields. */
+.gloss-green:hover:not(:disabled) {
+  filter: brightness(0.96);
+  box-shadow:
+    0 2px 4px rgb(20 70 0 / 0.3) inset,
+    0 2px 6px -4px rgb(45 122 8 / 0.6);
+}
+
+.gloss-green:active:not(:disabled) {
+  transform: translateY(1px);
+  filter: brightness(0.9);
+  box-shadow:
+    0 3px 6px rgb(20 70 0 / 0.4) inset,
+    0 1px 2px -1px rgb(45 122 8 / 0.5);
+}
+
+/* Clicking pushes a secondary control in further than hover does. */
+button.nxe-field:active:not(:disabled) {
+  transform: translateY(1px);
+  background: linear-gradient(180deg, #dde3e8, #eceff2);
+  box-shadow:
+    0 2px 4px rgb(30 40 50 / 0.22) inset,
+    0 1px 0 rgb(255 255 255 / 0.9);
+}
+
+.gloss-green:focus-visible,
+button.nxe-field:focus-visible {
+  outline: 2px solid #5dc21e;
+  outline-offset: 2px;
+}
+
+/* Recessed read-only well, e.g. the stats readout in the toolbar. */
+.nxe-slot {
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgb(214 221 228 / 0.75), rgb(234 238 242 / 0.85));
+  box-shadow:
+    0 1px 2px rgb(30 40 50 / 0.14) inset,
+    0 1px 0 rgb(255 255 255 / 0.9);
+}
+
+/* A set filter keeps the neutral field; its value sits in a glossy green chip,
+   the same bar that marks the selected row in the menu. */
+.nxe-field-active {
+  padding-left: 0.75rem;
+}
+
+.nxe-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 1.5rem;
+  padding: 0 0.6rem;
+  border-radius: 5px;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(180deg, #8fdf4f 0%, #62c41f 48%, #4caa10 52%, #57b918 100%);
+  text-shadow: 0 1px 1px rgb(0 0 0 / 0.3);
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.45) inset,
+    0 1px 2px rgb(45 122 8 / 0.35);
+}
+
+/* Trigger stays pressed in while its menu is open. */
+.nxe-field-open {
+  border-color: #bfc8d1;
+  background: linear-gradient(180deg, #e3e8ec 0%, #eef1f4 100%);
+  box-shadow:
+    0 1px 3px rgb(30 40 50 / 0.18) inset,
+    0 1px 0 rgb(255 255 255 / 0.9);
+}
+
+@keyframes nxe-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+}
+
+/* Floating glass panel, like the guide blades. */
+.nxe-menu {
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.9), rgb(255 255 255 / 0) 40px),
+    linear-gradient(180deg, rgb(248 250 251 / 0.96), rgb(232 236 240 / 0.96));
+  backdrop-filter: blur(16px) saturate(1.4);
+  border: 1px solid rgb(255 255 255 / 0.95);
+  box-shadow:
+    0 0 0 1px rgb(30 40 50 / 0.09),
+    0 4px 10px -4px rgb(30 40 50 / 0.2),
+    0 22px 44px -16px rgb(30 40 50 / 0.5);
+  transform-origin: top left;
+  animation: nxe-menu-in 180ms cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
+}
+
+.nxe-menu-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: 36px;
+  padding: 0 10px 0 12px;
+  border-radius: 7px;
+  font-size: 14px;
+  color: #39424b;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background 120ms,
+    box-shadow 120ms;
+}
+
+/* Short options (years) in a grid: centred cells, the green bar marks the pick. */
+.nxe-menu-grid {
+  display: grid;
+  gap: 2px;
+}
+
+.nxe-menu-grid .nxe-menu-item-neutral {
+  grid-column: 1 / -1;
+}
+
+.nxe-menu-grid .nxe-menu-item:not(.nxe-menu-item-neutral) {
+  justify-content: center;
+  padding: 0 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.nxe-menu-grid .nxe-menu-item:not(.nxe-menu-item-neutral) .nxe-menu-check {
+  display: none;
+}
+
+/* "All" option sits apart from the real choices. */
+.nxe-menu-item-neutral {
+  margin-bottom: 5px;
+}
+
+.nxe-menu-item-neutral::after {
+  content: '';
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: -3.5px;
+  height: 1px;
+  background: rgb(30 40 50 / 0.1);
+}
+
+/* Hover / keyboard highlight: pressed into the panel, matching the fields. */
+.nxe-menu-item.is-highlighted {
+  background: rgb(30 40 50 / 0.06);
+  box-shadow: 0 1px 2px rgb(30 40 50 / 0.12) inset;
+}
+
+.nxe-menu-check {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  opacity: 0;
+}
+
+/* The green glossy highlight bar of the 360 dashboard. */
+.nxe-menu-item-selected,
+.nxe-menu-item-selected.is-highlighted {
+  color: #fff;
+  font-weight: 600;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 0.3);
+  background: linear-gradient(180deg, #8de04b 0%, #5dc21e 50%, #4caf10 51%, #5dc21e 100%);
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.45) inset,
+    0 2px 6px -2px rgb(45 122 8 / 0.55);
+}
+
+.nxe-menu-item-selected.is-highlighted {
+  filter: brightness(0.96);
+  box-shadow:
+    0 2px 4px rgb(20 70 0 / 0.3) inset,
+    0 1px 3px -2px rgb(45 122 8 / 0.5);
+}
+
+.nxe-menu-item-selected .nxe-menu-check {
+  opacity: 1;
+}
+
+/* Keyboard shortcut shown on the control it triggers (see Shortcut.tsx). */
+.keycap {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 5px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  color: #5b6570;
+  background: linear-gradient(180deg, #ffffff, #e9edf0);
+  border: 1px solid #c5cdd5;
+  box-shadow: 0 1px 0 #b5bec7;
+}
+
+/* On the green primary button the cap is a deeper green key set into it, in either theme. */
+.gloss-green .keycap,
+[data-theme='dark'] .gloss-green .keycap {
+  color: #fff;
+  background: linear-gradient(180deg, #4fb012, #3a920a);
+  border-color: #2e7a05;
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.3) inset,
+    0 1px 0 rgb(255 255 255 / 0.35);
+  text-shadow: 0 1px 0 rgb(0 0 0 / 0.3);
+}
+
+/* A phone has no keyboard to press them on. */
+@media (max-width: 639px) {
+  .keycap {
+    display: none;
+  }
+}
+
+/* Trim text to cap height so labels sit optically centered in their controls
+   (Segoe UI's tall descender area otherwise pushes them down). */
+.nxe-label,
+.nxe-field > span,
+.keycap,
+.gloss-green {
+  text-box: trim-both cap alphabetic;
+  line-height: 1;
+}
+
+/* ---------- 3D game case ----------
+   Proportions follow a real Xbox 360 case: 135 × 190 × 14 mm.
+   Sizes are in container units so the case scales with its tile. */
+.case-scene {
+  container-type: inline-size;
+  perspective: 1600px;
+  perspective-origin: 50% 40%;
+}
+
+/* NXE-style glossy floor reflection. Must sit outside the 3D context, since
+   reflecting a preserve-3d element flattens it. It doubles the paint cost of
+   every case, so only the single case in a dialog gets it. */
+.nxe-panel .case-scene {
+  -webkit-box-reflect: below 0 linear-gradient(transparent 90%, rgb(0 0 0 / 0.13));
+}
+
+/* Skip layout and paint for cases scrolled far off screen. That also clips
+   painting to the tile, so the tile carries a bleed (padding cancelled by a
+   negative margin) for the spine, the hover lift and the drop shadow. */
+.grid > [data-tile] {
+  --bleed: 1rem;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 320px;
+  padding: var(--bleed);
+  margin: calc(var(--bleed) * -1);
+}
+
+.case {
+  /* A real case is 14 mm deep on 135 mm (10.4%), but in 3D under perspective that
+     reads as too chunky, so the spine is drawn slimmer. */
+  --depth: 7.8cqw;
+  --radius: 2.4cqw;
+  /* Shared by front and spine so the printed header lines up across the fold. */
+  --lip-top: 1.7cqw;
+  --lip-bottom: 1.5cqw;
+  /* The hinge is moulded plastic: its corners round off like the rest of the case. */
+  --hinge-radius: var(--radius);
+  position: relative;
+  aspect-ratio: 135 / 190;
+  transform-style: preserve-3d;
+  transform: rotateY(9deg);
+  transition: transform 500ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.case-scene:hover .case,
+.case-scene:focus-visible .case,
+.group:focus-visible .case {
+  transform: rotateY(3deg) translateZ(4cqw);
+}
+
+.case.case-flat {
+  transform: rotateY(7deg);
+}
+
+.case-front,
+.case-spine {
+  position: absolute;
+  backface-visibility: hidden;
+}
+
+/* Green translucent plastic shell around the insert. */
+.case-front {
+  inset: 0;
+  transform: translateZ(calc(var(--depth) / 2));
+  border-radius: var(--hinge-radius) var(--radius) var(--radius) var(--hinge-radius);
+  /* Real cases show only a thin lip of green plastic around the insert; on the
+     hinge side there is none, the sleeve folds straight onto the spine. */
+  padding: var(--lip-top) 1.5cqw var(--lip-bottom) 0;
+  background: linear-gradient(160deg, #8fe04e 0%, #4fb515 35%, #3a9a0c 70%, #2a7a06 100%);
+  box-shadow:
+    0 0 0 0.3cqw rgb(255 255 255 / 0.25) inset,
+    0 0 0 1px rgb(20 60 0 / 0.5);
+  overflow: hidden;
+}
+
+.case-insert {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 0 0.3cqw 0.3cqw 0;
+  background: #0f1114;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.35);
+}
+
+/* The header printed on X360 inserts, cut 1:1 from a retail scan (856×145). */
+.case-band {
+  position: relative;
+  flex: none;
+  aspect-ratio: 856 / 145;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 3%;
+  background: #fff;
+  box-shadow: 0 1px 0 rgb(80 120 50 / 0.45);
+  z-index: 1;
+}
+
+.case-band-print {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.case-band > * {
+  position: relative;
+  z-index: 1;
+}
+
+.case-band > .case-band-print {
+  position: absolute;
+  z-index: 0;
+}
+
+.case-art {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.case-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+
+/* Cover scans that already include the printed header fill the whole insert. */
+.case-insert-full .case-art img {
+  object-position: center;
+}
+
+/* Shrink-wrap sheen: a soft diagonal highlight plus a thin rim light. */
+.case-front::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background:
+    linear-gradient(
+      112deg,
+      rgb(255 255 255 / 0.2) 0%,
+      rgb(255 255 255 / 0.06) 22%,
+      transparent 36%,
+      transparent 75%,
+      rgb(255 255 255 / 0.05) 88%,
+      transparent 100%
+    ),
+    linear-gradient(180deg, rgb(255 255 255 / 0.1), transparent 8%),
+    linear-gradient(90deg, rgb(0 0 0 / 0.3), rgb(0 0 0 / 0.08) 1.2cqw, transparent 2.6cqw);
+  transition: opacity 500ms;
+}
+
+/* Diagonal glare streak on the shrink-wrap. It rests near the top-left corner
+   and sweeps across as the case turns towards the viewer. */
+.case-insert::after {
+  content: '';
+  position: absolute;
+  inset: -100%;
+  z-index: 2;
+  pointer-events: none;
+  /* A broad, soft sheen rather than a hard streak, like the light on SteamOS tiles. */
+  background: linear-gradient(
+    118deg,
+    transparent 28%,
+    rgb(255 255 255 / 0.04) 36%,
+    rgb(255 255 255 / 0.13) 43%,
+    rgb(255 255 255 / 0.04) 50%,
+    transparent 58%
+  );
+  /* The layer is 3× the insert; these offsets frame the streak top-left at rest
+     and sweep it to the bottom-right on hover. */
+  transform: translate(-5.3%, -5.3%);
+  transition: transform 900ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.case-scene:hover .case-insert::after,
+.group:focus-visible .case-insert::after {
+  transform: translate(20%, 20%);
+}
+
+.case-scene:hover .case-front::after {
+  opacity: 0.6;
+}
+
+/* Left spine: plastic hinge with the insert's spine (header strip + title). */
+.case-spine {
+  /* On a rounded case the flat side wall stops where the corners start to curve;
+     running it full height leaves a square nub at each end of the hinge. Stopping
+     at the lip also keeps the spine print level with the front header. */
+  top: var(--lip-top);
+  bottom: var(--lip-bottom);
+  left: 0;
+  width: var(--depth);
+  transform-origin: left center;
+  transform: translateZ(calc(var(--depth) / -2)) rotateY(-90deg);
+  border-radius: 0.8cqw;
+  overflow: hidden;
+  padding: 0 0 0 1.2cqw;
+  background: linear-gradient(90deg, #236405, #41950f 30%, #4c9f18 55%, #276d06);
+}
+
+.case-spine-insert {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  border-radius: 0;
+  background: #15181c;
+}
+
+/* The clear sleeve over the printed insert, catching light where the spine turns. */
+.case-spine-insert::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgb(255 255 255 / 0.22), rgb(255 255 255 / 0.04) 30%, transparent 60%, rgb(0 0 0 / 0.28));
+}
+
+/* White header as printed on retail spines: the orb upright, "XBOX 360" running down
+   under it, green and grey (composed once from the 2005 logo into spine-logo.png). */
+.case-spine-band {
+  flex: none;
+  width: 100%;
+  padding: 0.6cqw 0 1cqw;
+  background: linear-gradient(90deg, #dfe3e6, #f4f6f7 55%, #ffffff);
+  box-shadow: 0 1px 0 rgb(0 0 0 / 0.25);
+}
+
+.case-spine-logo {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* PEGI label at the foot, as on European releases. */
+.case-spine-pegi {
+  flex: none;
+  width: 64%;
+  margin: 0 0 1.8cqw;
+  border-radius: 0.4cqw;
+  box-shadow: 0 0 0 0.25cqw rgb(255 255 255 / 0.85);
+}
+
+.case-spine-pegi svg {
+  display: block;
+  fill: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+.case-spine-title {
+  position: relative;
+  isolation: isolate;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 4cqw 0;
+  writing-mode: vertical-rl;
+  font-size: 4.6cqw;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #f1f4f6;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 0 1.5cqw rgb(0 0 0 / 0.8);
+}
+
+/* The cover art carries on around the fold: its left edge, mirrored, so the
+   colours run continuously from front to spine. Darkened for the title. */
+.case-spine-title::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(90deg, rgb(0 0 0 / 0.25), rgb(0 0 0 / 0.45)),
+    var(--cover, linear-gradient(#262b31, #15181c)) left top / auto 100% no-repeat;
+  transform: scaleX(-1);
+}
+
+/* ---------- Digital game ----------
+   No case to show: the art on a flat glossy card, the shape of a case front, with a blue
+   strip saying it is digital. It turns and lifts with the cases (.case). */
+.digital-card {
+  border-radius: 2.4cqw;
+  background: #0f1114;
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.4),
+    0 1.5cqw 3cqw -1cqw rgb(0 0 0 / 0.35);
+}
+
+.digital-card .case-insert {
+  border-radius: inherit;
+  box-shadow: 0 0 0 0.3cqw rgb(255 255 255 / 0.16) inset;
+}
+
+/* A flat band across the top of the art, the way the console's store marked its download
+   titles: one solid colour, the word large and light in white, nothing else. Blue here. */
+.digital-card-band {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  display: flex;
+  align-items: center;
+  /* The store's band is about a sixth of the art's width tall (584 × 100). */
+  aspect-ratio: 584 / 100;
+  padding: 0 4cqw;
+  font-size: 9.4cqw;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: #fff;
+  background: #1f78d1;
+}
+
+/* ---------- SteelBook edition ----------
+   A slimmer metal case: brushed-steel rim, no printed header, the art printed
+   edge to edge on the metal with an embossed frame and a satin sheen. */
+.case-steel {
+  --depth: 6cqw;
+  --radius: 1.8cqw;
+  --lip-top: 1cqw;
+  --lip-bottom: 1cqw;
+}
+
+.case-steel .case-front {
+  padding: var(--lip-top) 1cqw var(--lip-bottom) 0;
+  background:
+    repeating-linear-gradient(90deg, rgb(255 255 255 / 0.07) 0 0.25cqw, transparent 0.25cqw 0.6cqw),
+    linear-gradient(160deg, #f1f4f6 0%, #a9b2bb 28%, #dde2e6 52%, #7f8a94 78%, #c6cdd3 100%);
+  box-shadow:
+    0 0 0 0.3cqw rgb(255 255 255 / 0.55) inset,
+    0 0 0 1px rgb(25 32 40 / 0.6);
+}
+
+.case-steel .case-insert {
+  border-radius: 0.9cqw;
+  box-shadow:
+    0 0 0 0.25cqw rgb(255 255 255 / 0.3),
+    0 0 0 1px rgb(0 0 0 / 0.45);
+}
+
+/* Ink on metal: a fine brushed grain and a satin highlight over the art,
+   with the edges pressed in like the embossed border of a real SteelBook. */
+.case-steel .case-art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(135deg, rgb(255 255 255 / 0.2) 0%, transparent 35%, transparent 62%, rgb(255 255 255 / 0.1) 78%, transparent 92%),
+    repeating-linear-gradient(90deg, rgb(255 255 255 / 0.025) 0 1px, transparent 1px 3px);
+  box-shadow:
+    0 0 0 0.35cqw rgb(255 255 255 / 0.16) inset,
+    0 0 2.4cqw rgb(0 0 0 / 0.4) inset;
+  mix-blend-mode: screen;
+}
+
+.case-steel .case-art img {
+  filter: contrast(1.06) saturate(1.08);
+}
+
+.case-steel .case-spine {
+  padding-left: 0.6cqw;
+  border-radius: 0.6cqw;
+  background: linear-gradient(90deg, #6c7781, #c8cfd5 30%, #eef1f3 55%, #87919b);
+}
+
+.case-steel .case-spine-band {
+  background: linear-gradient(90deg, #262c32, #39414a 60%, #47505a);
+}
+
+/* The logo on the spine is stamped in silver rather than printed green. */
+.case-steel .case-spine-logo {
+  filter: grayscale(1) brightness(1.5);
+}
+
+/* Contact shadow under each case. The gradient itself fades out softly: a blur
+   filter on every case cost a lot of GPU time on phones for no visible gain. */
+.case-shadow {
+  position: absolute;
+  left: 4%;
+  right: 2%;
+  bottom: -3.5cqw;
+  height: 7cqw;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(20 30 40 / 0.36), rgb(20 30 40 / 0.14) 55%, transparent);
+  transition:
+    transform 500ms,
+    opacity 500ms;
+  pointer-events: none;
+}
+
+.case-scene:hover .case-shadow {
+  transform: scale(0.92) translateY(2cqw);
+  opacity: 0.65;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Backwards fill only: the end state is the tile as it is anyway. Holding it with
+   "both" keeps every finished animation alive, and with it a GPU layer per tile that
+   the browser then composites on every frame of every dialog. */
+.rise {
+  animation: rise 500ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+/* ---------- Dashboard-style dialog transitions ---------- */
+
+@keyframes nxe-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes nxe-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/* Panel zooms up out of the dashboard and settles with a slight overshoot. */
+@keyframes nxe-panel-in {
+  0% {
+    opacity: 0;
+    transform: perspective(1400px) translateY(28px) scale(0.9) rotateX(6deg);
+  }
+  55% {
+    opacity: 1;
+  }
+  100% {
+    transform: none;
+  }
+}
+
+@keyframes nxe-panel-out {
+  to {
+    opacity: 0;
+    transform: perspective(1400px) translateY(12px) scale(0.95);
+  }
+}
+
+.nxe-backdrop {
+  will-change: opacity;
+  animation: nxe-fade-in 280ms ease-out both;
+}
+
+/* Blurred cover behind a dialog. Blurring a quarter-size layer and scaling it
+   up looks the same as a huge blur at full size, at a fraction of the cost. */
+.nxe-backdrop-art {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 25vw;
+  height: 25vh;
+  background-size: cover;
+  background-position: center;
+  filter: blur(14px);
+  opacity: 0.5;
+  /* 120% of the viewport, centred, so the soft blurred edges stay off screen. */
+  transform: scale(4.8) translate(-8.33%, -8.33%);
+  transform-origin: top left;
+  pointer-events: none;
+}
+
+.nxe-backdrop.is-closing {
+  animation: nxe-fade-out 220ms ease-in both;
+}
+
+.nxe-panel {
+  will-change: transform, opacity;
+  animation: nxe-panel-in 460ms cubic-bezier(0.18, 0.9, 0.3, 1.12) both;
+}
+
+.nxe-panel.is-closing {
+  animation: nxe-panel-out 200ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+/* The selected case swings round to face the viewer. */
+@keyframes case-spin-in {
+  from {
+    transform: rotateY(60deg) scale(0.85);
+  }
+}
+
+.case-spin-in .case {
+  animation: case-spin-in 700ms cubic-bezier(0.16, 0.9, 0.3, 1.08) 80ms backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .case,
+  .rise,
+  .case-spin-in .case,
+  .nxe-backdrop,
+  .nxe-panel,
+  .nxe-menu {
+    transition: none;
+    animation: none;
+  }
+} /* ---------- Compact shelf: small cases, no captions ---------- */
+.compact-tile {
+  position: relative;
+  display: block;
+  text-align: left;
+  outline: none;
+}
+
+/* A status or "ordered" badge centred at the foot of the cover. Inside the tile, since the
+   tile's content-visibility clips anything hanging over its edge; the top corner holds
+   the pack and digital chips. The title plate covers it on hover. */
+.compact-tile-badge {
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  translate: -50% 0;
+  z-index: 2;
+  /* A small smoked tag on the case; only the mark carries the status colour. */
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  color: #5ccfff;
+  background: rgb(10 14 20 / 0.78);
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.18) inset,
+    0 1px 3px rgb(0 0 0 / 0.4);
+}
+
+/* Trial version: an amber chip, like the "Trial" label on the dashboard. */
+.demo-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 16px;
+  padding: 0 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1;
+  color: #4a3200;
+  background: linear-gradient(180deg, #ffe48a 0%, #f5bf1f 100%);
+  box-shadow: 0 0 0 1px rgb(160 110 0 / 0.35) inset;
+}
+
+.flag-toggle {
+  color: #475569;
+}
+
+.flag-toggle-icon {
+  display: grid;
+  color: #9aa5b1;
+  transition:
+    color 150ms,
+    filter 150ms;
+}
+
+.flag-toggle-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Switched on: the icon lights up in its badge's colour, amber for demo, steel for SteelBook. */
+.flag-toggle[aria-pressed='true'] {
+  color: #1d2329;
+  font-weight: 600;
+}
+
+.flag-toggle-demo[aria-pressed='true'] .flag-toggle-icon {
+  color: #e09b00;
+  filter: drop-shadow(0 0 4px rgb(240 168 0 / 0.55));
+}
+
+.flag-toggle-steel[aria-pressed='true'] .flag-toggle-icon {
+  color: #6b7a88;
+  filter: drop-shadow(0 0 4px rgb(140 160 180 / 0.8));
+}
+
+[data-theme='dark'] .flag-toggle-demo[aria-pressed='true'] .flag-toggle-icon {
+  color: #ffc933;
+}
+
+[data-theme='dark'] .flag-toggle-steel[aria-pressed='true'] .flag-toggle-icon {
+  color: #dfe6ec;
+}
+
+/* Even, so the 18px tag leaves the same whole pixels on each side. */
+.compact-tile-badge svg {
+  width: 12px;
+  height: 12px;
+}
+
+.compact-tile-badge-completed {
+  color: #8fe04a;
+}
+
+.compact-tile-badge-dropped {
+  color: #ff7a8a;
+}
+
+/* Title plate sliding up over the lower part of the case on hover/focus. */
+.compact-tile-caption {
+  position: absolute;
+  left: 4%;
+  right: 4%;
+  bottom: 4%;
+  z-index: 3;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.3;
+  color: #fff;
+  background: rgb(8 12 18 / 0.88);
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.12) inset,
+    0 4px 12px rgb(0 0 0 / 0.35);
+  opacity: 0;
+  transform: translateY(6px);
+  pointer-events: none;
+  transition:
+    opacity 180ms,
+    transform 180ms;
+}
+
+.compact-tile:hover .compact-tile-caption,
+.compact-tile:focus-visible .compact-tile-caption {
+  opacity: 1;
+  transform: none;
+}
+
+/* Caption sits right under the case. Over a wallpaper (light or dark) it is
+   white with a soft shadow, like the labels on dashboard themes. */
+.tile-caption {
+  margin-top: 0.75rem;
+  text-shadow:
+    0 1px 2px rgb(0 0 0 / 0.75),
+    0 0 8px rgb(0 0 0 / 0.45);
+}
+
+/* On a pale wallpaper (see Backdrop.tsx) white text gets a darker, wider halo. */
+[data-backdrop='light'] .nxe-channel,
+[data-backdrop='light'] .brand {
+  text-shadow:
+    0 1px 1px rgb(0 0 0 / 0.45),
+    0 0 6px rgb(0 0 0 / 0.3);
+}
+
+/* Game captions turn dark instead, with no shadow: on a pale ground it only blurs them. */
+[data-backdrop='light'] .tile-caption {
+  text-shadow: none;
+}
+
+[data-backdrop='light'] .tile-title {
+  color: #1c252e;
+}
+
+/* As tall as the marks (14px) with or without them, so a mark never pushes the year down. */
+.tile-meta {
+  min-height: 14px;
+}
+
+[data-backdrop='light'] .tile-meta {
+  color: #46525d;
+}
+
+/* Pills carry their own background, so the caption's shadow would only smudge their text. */
+.tile-caption .rounded {
+  text-shadow: none;
+}
+
+/* ---------- Channel list (see ChannelNav.tsx) ---------- */
+
+.nxe-channels {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Every channel is set at full size and scaled down by its distance from the
+   current one, so switching glides like the dashboard instead of reflowing. */
+.nxe-channel {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  font-size: 28px;
+  line-height: 1;
+  white-space: nowrap;
+  color: #fff;
+  text-shadow: 0 1px 4px rgb(0 0 0 / 0.35);
+  transform-origin: left bottom;
+  transition:
+    transform 420ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.nxe-channel:not([aria-current]):hover {
+  opacity: 0.95 !important;
+}
+
+.nxe-channel:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nxe-channel {
+    transition: none;
+  }
+}
+
+/* ---------- Layout switch (see ViewSwitch.tsx) ---------- */
+
+.view-switch {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 36px;
+  padding: 3px;
+  gap: 2px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgb(206 214 222 / 0.8), rgb(232 236 240 / 0.9));
+  box-shadow:
+    0 1px 3px rgb(30 40 50 / 0.18) inset,
+    0 1px 0 rgb(255 255 255 / 0.9);
+}
+
+/* The lit pill: same glossy green as the primary button, gliding between options. */
+.view-switch-thumb {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  border-radius: 7px;
+  background: linear-gradient(180deg, #a8ea6c 0%, #6fd02a 48%, #4fb012 52%, #5dc21e 100%);
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.6) inset,
+    0 2px 6px -2px rgb(45 122 8 / 0.7);
+  transition:
+    left 320ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    width 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.view-switch-option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  height: 100%;
+  padding: 0 0.7rem;
+  border-radius: 7px;
+  font-size: 13px;
+  color: #5b6672;
+  cursor: pointer;
+  transition: color 200ms;
+}
+
+.view-switch-option:hover {
+  color: #1d2329;
+}
+
+.view-switch-option[aria-checked='true'] {
+  color: #fff;
+  font-weight: 600;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 0.3);
+}
+
+.view-switch-option:focus-visible {
+  outline: 2px solid #5dc21e;
+  outline-offset: 1px;
+}
+
+.view-switch-option svg {
+  flex: none;
+}
+
+/* Cover size (see SizeSlider.tsx): the same recessed tray as the layout switch, with a
+   groove of notches that fills green up to a glossy knob. */
+.size-slider {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 36px;
+  padding: 0 3px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgb(206 214 222 / 0.8), rgb(232 236 240 / 0.9));
+  box-shadow:
+    0 1px 3px rgb(30 40 50 / 0.18) inset,
+    0 1px 0 rgb(255 255 255 / 0.9);
+}
+
+.size-slider-end {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  color: #5b6672;
+  transition: color 200ms;
+}
+
+.size-slider-end svg {
+  width: 15px;
+  height: 15px;
+}
+
+.size-slider-end:first-child svg {
+  width: 13px;
+  height: 13px;
+}
+
+.size-slider-end:hover:not(:disabled) {
+  color: #1d2329;
+}
+
+.size-slider-end:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.size-slider-end:focus-visible {
+  outline: 2px solid #5dc21e;
+  outline-offset: -1px;
+}
+
+/* The knob's centre runs from 7px in at one end to 7px in at the other, like the thumb
+   of the invisible range input laid over it, so a drag and the knob agree. */
+.size-slider-track {
+  position: relative;
+  width: 104px;
+  height: 100%;
+}
+
+.size-slider-rail {
+  position: absolute;
+  top: 50%;
+  right: 7px;
+  left: 7px;
+  height: 6px;
+  margin-top: -3px;
+  border-radius: 99px;
+  background: linear-gradient(180deg, #b5bec7, #d3d9df);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.25) inset;
+}
+
+.size-slider-fill {
+  position: absolute;
+  inset: 0 auto 0 -3px;
+  width: calc(var(--at) * 100% + 3px);
+  border-radius: 99px;
+  background: linear-gradient(180deg, #a8ea6c 0%, #6fd02a 48%, #4fb012 52%, #5dc21e 100%);
+  box-shadow: 0 0 6px rgb(93 194 30 / 0.45);
+  transition: width 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.size-slider-notch {
+  position: absolute;
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  margin: -2px 0 0 -2px;
+  border-radius: 50%;
+  background: rgb(80 92 104 / 0.45);
+}
+
+/* On the green fill a notch is only a faint dent, so the fill reads as one piece. */
+.size-slider-notch.is-lit,
+[data-theme='dark'] .size-slider-notch.is-lit {
+  width: 3px;
+  height: 3px;
+  margin: -1.5px 0 0 -1.5px;
+  background: rgb(25 85 0 / 0.4);
+}
+
+/* Glossy white, like the face of a controller button, rimmed in green. */
+.size-slider-knob {
+  position: absolute;
+  top: 50%;
+  left: calc(var(--at) * 100%);
+  width: 14px;
+  height: 20px;
+  margin: -10px 0 0 -7px;
+  border-radius: 5px;
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.95) 0 48%, rgb(255 255 255 / 0) 52%), linear-gradient(180deg, #ffffff, #dfe5ea);
+  box-shadow:
+    0 0 0 1px rgb(63 154 12 / 0.55),
+    0 1px 0 #fff inset,
+    0 2px 4px rgb(20 30 40 / 0.35);
+  transition: left 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.size-slider-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.size-slider-input::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 36px;
+}
+
+.size-slider-input::-moz-range-thumb {
+  width: 14px;
+  height: 36px;
+  border: 0;
+}
+
+.size-slider:has(.size-slider-input:focus-visible) .size-slider-knob {
+  box-shadow:
+    0 0 0 2px #fff,
+    0 0 0 4px #5dc21e,
+    0 2px 4px rgb(20 30 40 / 0.35);
+}
+
+.size-slider-track:hover .size-slider-knob {
+  background: linear-gradient(180deg, rgb(255 255 255) 0 48%, rgb(255 255 255 / 0) 52%), linear-gradient(180deg, #ffffff, #e9f6de);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .view-switch-thumb,
+  .size-slider-fill,
+  .size-slider-knob {
+    transition: none;
+  }
+}
+
+/* ---------- Wordmark (see Brand.tsx) ---------- */
+
+/* Sits on the wallpaper like the channel names: white with a soft shadow. */
+/* The mark sits beside the name only, centred on its capitals; the tagline runs
+   underneath the name. */
+.brand {
+  display: grid;
+  text-align: left;
+  grid-template-columns: auto auto;
+  align-items: center;
+  column-gap: 10px;
+  color: #fff;
+  text-shadow:
+    0 1px 2px rgb(0 0 0 / 0.55),
+    0 0 10px rgb(0 0 0 / 0.25);
+  user-select: none;
+}
+
+/* The ring with its badge; it overhangs the cap-height row instead of stretching it. */
+.brand-ring {
+  position: relative;
+  display: block;
+  width: 34px;
+  height: 34px;
+  margin-block: -10px;
+  /* Optical nudge: centred on the caps it reads a touch low. */
+  translate: 0 -1px;
+}
+
+.brand-mark {
+  display: block;
+  width: 34px;
+  height: 34px;
+  filter: drop-shadow(0 2px 4px rgb(0 0 0 / 0.35));
+  transition: filter 200ms;
+}
+
+/* The settings badge on the ring's lower right, like a glossy white button. */
+.brand-badge {
+  position: absolute;
+  right: -5px;
+  bottom: -4px;
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 999px;
+  color: #3b444d;
+  background: linear-gradient(180deg, #ffffff, #dfe4e9);
+  box-shadow:
+    0 0 0 1px rgb(30 40 50 / 0.18),
+    0 1px 3px rgb(0 0 0 / 0.35);
+}
+
+.brand-badge svg {
+  width: 11px;
+  height: 11px;
+  stroke-width: 2.2;
+}
+
+/* Ring of Light LEDs (see RingMark.tsx): they light up quickly and fade out slowly,
+   so the startup chase leaves a short trail behind it. */
+.ring-led {
+  opacity: 0;
+  transition: opacity 340ms ease-out;
+}
+
+.ring-led.is-on {
+  opacity: 1;
+  transition-duration: 90ms;
+}
+
+/* A heavy X against a light "Shelf". */
+.brand-name {
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-box: trim-both cap alphabetic;
+}
+
+.brand-xenon {
+  font-weight: 700;
+}
+
+/* A small "TM" at the top of the name, in letters: the ™ glyph is too fine at this size. */
+.brand-tm {
+  margin-left: 2px;
+  font-size: 7.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  vertical-align: top;
+  line-height: 1;
+  opacity: 0.85;
+}
+
+.brand-tagline {
+  grid-column: 2;
+  margin-top: 5px;
+  line-height: 1;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  opacity: 0.8;
+}
+
+/* The wordmark as the settings button, like the Guide button on the pad: under the
+   pointer all four quarters of the ring light up, as they stay while the panel is open. */
+.settings-button {
+  display: block;
+  padding: 6px 8px;
+  margin: -6px -8px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: transform 120ms;
+}
+
+.settings-button:hover .ring-led,
+.settings-button-open .ring-led {
+  opacity: 1;
+  transition-duration: 90ms;
+}
+
+.settings-button:active {
+  transform: translateY(1px);
+}
+
+.settings-button:focus-visible {
+  outline: 2px solid #5dc21e;
+  outline-offset: 2px;
+}
+
+/* ---------- Settings panel (see SettingsMenu.tsx) ---------- */
+
+/* One scroll for the whole panel; SettingsMenu sets its max-height to fit the screen. */
+.settings-panel {
+  width: min(calc(100vw - 2rem), 420px);
+  padding: 12px 10px 8px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.settings-heading {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+/* The wallpaper page slides in from the right, as a sub-page does in the dashboard's settings. */
+.settings-page-sub {
+  animation: settings-page-in 180ms ease-out;
+}
+
+@keyframes settings-page-in {
+  from {
+    opacity: 0;
+    translate: 16px 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-page-sub {
+    animation: none;
+  }
+}
+
+.settings-back {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: -4px;
+  padding: 4px 6px 4px 4px;
+  border-radius: 6px;
+  color: #94a3b8;
+}
+
+.settings-back:hover {
+  color: #39424b;
+  background: rgb(30 40 50 / 0.06);
+}
+
+.settings-back svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* The current wallpaper, small, beside its name in the settings row. */
+.settings-row-thumb {
+  width: 32px;
+  height: 18px;
+  flex: none;
+  position: relative;
+  overflow: hidden;
+  border-radius: 3px;
+  /* A size container, so a drawn wallpaper scales into it whole (see .wallpaper-thumb). */
+  container-type: size;
+  box-shadow: 0 0 0 1px rgb(30 40 50 / 0.2);
+}
+
+/* Name, version and build at the foot of the panel. */
+.settings-about {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 10px 4px 4px;
+  border-top: 1px solid rgb(30 40 50 / 0.1);
+  font-size: 11px;
+  color: #6b7682;
+}
+
+.settings-about b {
+  color: #39424b;
+}
+
+.settings-about code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 10px;
+  background: rgb(30 40 50 / 0.07);
+}
+
+.wallpaper-scroll {
+  margin: 0 -4px;
+  padding: 0 4px;
+}
+
+.wallpaper-group + .wallpaper-group {
+  margin-top: 8px;
+}
+
+.wallpaper-group-label {
+  margin: 0 4px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #6b7682;
+}
+
+.wallpaper-option {
+  display: block;
+  border-radius: 7px;
+  padding: 3px;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+  transition: background 150ms;
+}
+
+.wallpaper-option:hover,
+.wallpaper-option:focus-visible {
+  background: rgb(30 40 50 / 0.06);
+}
+
+.wallpaper-thumb {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 9;
+  border-radius: 6px;
+  overflow: hidden;
+  container-type: size;
+  box-shadow:
+    0 0 0 1px rgb(30 40 50 / 0.15),
+    0 2px 5px -2px rgb(30 40 50 / 0.35);
+  transition:
+    transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 180ms;
+}
+
+.wallpaper-thumb-art {
+  position: absolute;
+  inset: 0;
+}
+
+.wallpaper-option:hover .wallpaper-thumb,
+.wallpaper-option:focus-visible .wallpaper-thumb {
+  transform: translateY(-2px);
+  box-shadow:
+    0 0 0 1px rgb(30 40 50 / 0.15),
+    0 8px 16px -8px rgb(30 40 50 / 0.55);
+}
+
+/* Keyboard focus: the green highlight bar of the dashboard menus, as a ring. */
+.wallpaper-option:focus-visible .wallpaper-thumb {
+  box-shadow:
+    0 0 0 2px #fff,
+    0 0 0 4px #8fdf4f,
+    0 8px 16px -8px rgb(30 40 50 / 0.55);
+}
+
+.wallpaper-option[aria-checked='true'] .wallpaper-thumb {
+  box-shadow:
+    0 0 0 2px #5dc21e,
+    0 4px 10px -4px rgb(45 122 8 / 0.6);
+}
+
+.wallpaper-name {
+  display: block;
+  padding: 4px 4px 1px 6px;
+  font-size: 11px;
+  color: #4b5560;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wallpaper-option[aria-checked='true'] .wallpaper-name {
+  font-weight: 600;
+  color: #2d7a08;
+}
+
+/* "Delete" on the game card asking to be pressed again: the field glazed red. */
+.nxe-field.delete-confirm {
+  border-color: #c81e4a;
+  color: #fff;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 0.3);
+  background: linear-gradient(180deg, #fb7193 0%, #e11d48 48%, #be123c 52%, #d3164a 100%);
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.4) inset,
+    0 2px 6px -2px rgb(160 20 50 / 0.6);
+}
+
+/* ---------- Filters panel (see FilterPanel.tsx) ---------- */
+.filter-panel {
+  width: min(380px, calc(100vw - 16px));
+  padding: 10px;
+}
+
+/* A set filter reads in green, so what is narrowing the list stands out. */
+.filter-panel .sheet-row-value:not(.sheet-row-empty) {
+  color: #3f8f10;
+}
+
+.filter-group-label {
+  margin-bottom: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #6b7682;
+}
+
+.filter-panel-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 8px;
+  border-top: 1px solid rgb(30 40 50 / 0.1);
+  font-size: 13px;
+  color: #6b7682;
+}
+
+/* How many filters are set, on the "filters" button. */
+.filter-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 0.25);
+  background: linear-gradient(180deg, #8fdf4f, #4caa10);
+}
+
+/* A set filter under the toolbar, with a cross that takes it off. */
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 5px 0 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 0.25);
+  background: linear-gradient(180deg, #8fdf4f 0%, #62c41f 48%, #4caa10 52%, #57b918 100%);
+}
+
+.filter-chip button {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: rgb(255 255 255 / 0.22);
+  cursor: pointer;
+}
+
+.filter-chip button:hover {
+  background: rgb(255 255 255 / 0.38);
+}
+
+/* ---------- Library summary (see StatsSummary.tsx) ---------- */
+
+.stats-card {
+  width: 240px;
+  padding: 12px 12px 8px;
+}
+
+.stats-card .filter-group-label {
+  padding: 0 4px;
+}
+
+.stats-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 30px;
+  padding: 0 4px;
+  font-size: 14px;
+  color: #4b5560;
+}
+
+button.stats-row {
+  width: 100%;
+  padding: 0 8px;
+  border-radius: 7px;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+  transition:
+    background 120ms,
+    color 120ms;
+}
+
+.stats-row-active {
+  background: rgb(82 176 24 / 0.14);
+}
+
+.stats-row-active .text-slate-400 {
+  color: #3f8f10;
+}
+
+/* Hover / keyboard focus: the green glossy bar of the list view's rows. */
+button.stats-row:hover,
+button.stats-row:focus-visible {
+  color: #fff;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 0.3);
+  background: linear-gradient(180deg, #8fdf4f 0%, #62c41f 48%, #4caa10 52%, #57b918 100%);
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.45) inset,
+    0 2px 6px -2px rgb(45 122 8 / 0.6);
+}
+
+button.stats-row:focus-visible {
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.45) inset,
+    0 0 0 2px #fff,
+    0 0 0 4px var(--color-x360);
+}
+
+button.stats-row:is(:hover, :focus-visible) :is(b, .text-slate-400) {
+  color: #fff;
+}
+
+.stats-row b {
+  margin-left: auto;
+  font-weight: 600;
+  color: #1f272e;
+  font-variant-numeric: tabular-nums;
+}
+
+.stats-divider {
+  height: 1px;
+  margin: 6px 4px;
+  background: rgb(30 40 50 / 0.1);
+}
+
+/* Game count raised beside a channel name; it scales with the channel. */
+.nxe-channel-count {
+  margin-left: 0.2em;
+  font-size: 0.5em;
+  font-weight: 600;
+  vertical-align: 0.55em;
+  line-height: 0;
+  opacity: 0.85;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Touch screens ----------
+   Phones and tablets have far less GPU to spare, and nothing to hover with. */
+@media (hover: none) {
+  /* One flat plane per case instead of a 3D scene with a separate spine: under
+     preserve-3d every face is its own layer, hundreds of them in a full shelf.
+     The case keeps its turn, so the shelf still looks the same at a glance. */
+  .case {
+    transform-style: flat;
+    transition: none;
+  }
+
+  .case-spine {
+    display: none;
+  }
+
+  .case-insert::after,
+  .case-front::after {
+    transition: none;
+  }
+
+  /* Frosted glass re-blurs the page under it on every frame it moves; the panels
+     are nearly opaque anyway. */
+  .nxe-menu,
+  .toast::before {
+    backdrop-filter: none;
+  }
+
+  /* A dialog slides up flat instead of tilting out of the screen: the 3D zoom of a
+     whole card over a shelf of cases costs a phone frames. */
+  .nxe-panel {
+    animation: nxe-panel-in-flat 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  .case-spin-in .case {
+    animation: none;
+  }
+
+  /* Once a dialog is in (see Dialog.tsx), it stands on an opaque backdrop and the page
+     under it is hidden: otherwise every frame of scrolling the dialog composites the
+     wallpaper, the whole shelf of cases and two see-through layers on top. */
+  /* Beats the dark theme's see-through dim as well. */
+  :root .nxe-backdrop[role='dialog'] {
+    background-color: rgb(16 20 24);
+  }
+
+  .nxe-backdrop-art {
+    opacity: 0.6;
+  }
+
+  .dialog-covered #root {
+    visibility: hidden;
+  }
+
+  /* Once in, nothing is left to move. A finished entrance that holds its last frame
+     (fill-mode both) still counts as running, and the hint keeps its layer too: the
+     backdrop, with the whole sheet in it, would be drawn into a layer of its own on
+     every frame of scrolling. Leaving, the dialog loses .dialog-covered first, so its
+     exit animation still plays. */
+  .dialog-covered :is(.nxe-backdrop, .nxe-panel) {
+    animation: none;
+    will-change: auto;
+  }
+
+  /* The case in a dialog faces the reader straight on: a case turned in 3D inside a
+     scrolling sheet lifts everything drawn over it (tabs, rows, buttons) onto layers
+     of their own. */
+  .nxe-panel .case-scene {
+    perspective: none;
+  }
+
+  .nxe-panel :is(.case, .case-front) {
+    transform: none;
+  }
+
+  .nxe-panel .case-front {
+    backface-visibility: visible;
+  }
+
+  /* The glare sweeps across on hover, which a finger never gives; at rest it is a layer
+     three times the case. */
+  .nxe-panel .case-insert::after {
+    display: none;
+  }
+
+  .dialog-covered :is(.nxe-backdrop, .toast-dock, .tooltip) {
+    visibility: visible;
+  }
+}
+
+@keyframes nxe-panel-in-flat {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+
+/* Menu flipped to the trigger's right edge grows from that corner. */
+.nxe-menu-right {
+  transform-origin: top right;
+}
+
+/* Opened upwards: it grows out of the trigger below it. */
+.nxe-menu-up {
+  transform-origin: bottom left;
+}
+
+.nxe-menu-up.nxe-menu-right {
+  transform-origin: bottom right;
+}
+
+/* NXE scrollbar for panels and lists: no arrows, a faint groove and a glossy silver
+   pill that lights green under the pointer, like a highlighted menu row. Chrome drops
+   these ::-webkit rules once scrollbar-width or -color is set, so those stand only as
+   the fallback for browsers without them. */
+.nxe-scroll::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.nxe-scroll::-webkit-scrollbar-button {
+  display: none;
+}
+
+.nxe-scroll::-webkit-scrollbar-track {
+  margin: 12px 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent 4px, rgb(30 40 50 / 0.07) 4px 6px, transparent 6px);
+}
+
+.nxe-scroll::-webkit-scrollbar-thumb {
+  min-height: 44px;
+  border: 2.5px solid transparent;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #c3cad1, #eef1f4 50%, #c3cad1) padding-box;
+  box-shadow:
+    inset 0 0 0 1px rgb(30 40 50 / 0.14),
+    inset 0 1px 0 rgb(255 255 255 / 0.7);
+}
+
+.nxe-scroll::-webkit-scrollbar-thumb:hover,
+.nxe-scroll::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(90deg, #4fae14, #8ee04a 50%, #4fae14) padding-box;
+  box-shadow:
+    inset 0 0 0 1px rgb(30 90 0 / 0.35),
+    inset 0 1px 0 rgb(255 255 255 / 0.45);
+}
+
+.nxe-scroll::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  .nxe-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #b9c2ca transparent;
+  }
+}
+
+/* A status or priority icon, in its light's colour (see choiceIcons.tsx). */
+.status-icon {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+}
+
+.status-icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.status-icon-unplayed {
+  color: #8a96a3;
+}
+
+.status-icon-playing {
+  color: #1f7fd6;
+}
+
+.status-icon-medium {
+  color: #d99000;
+}
+
+.status-icon-completed {
+  color: #3f9a0c;
+}
+
+.status-icon-dropped {
+  color: #d81f3a;
+}
+
+.status-icon-ordered {
+  color: #0284c7;
+}
+
+/* Brighter in the dark. */
+[data-theme='dark'] .status-icon-unplayed {
+  color: #b7c1cb;
+}
+
+[data-theme='dark'] .status-icon-playing {
+  color: #6cb8ff;
+}
+
+[data-theme='dark'] .status-icon-medium {
+  color: #ffc933;
+}
+
+[data-theme='dark'] .status-icon-completed {
+  color: #9be15d;
+}
+
+[data-theme='dark'] .status-icon-dropped {
+  color: #ff7d8e;
+}
+
+[data-theme='dark'] .status-icon-ordered {
+  color: #5ccfff;
+}
+
+/* Over the wallpaper, on a picked menu row and on a lit green option, colour would sink into the green: the
+   icon takes the text's colour and its shape tells the status. */
+.tile-meta .status-icon,
+[data-theme] .nxe-menu-item-selected .status-icon,
+[data-theme] .gloss-green .status-icon {
+  color: inherit;
+}
+
+/* The marks beside a game's name (see GameMarks.tsx): where it stands, the player's own
+   score and a game that plays on Xbox One / Series, all one height. */
+.game-mark {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+}
+
+.game-mark .status-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.game-rating {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  height: 14px;
+  line-height: 14px;
+  gap: 3px;
+  font-weight: 600;
+}
+
+.game-rating svg {
+  width: 14px;
+  height: 14px;
+  color: #ffc933;
+  fill: currentColor;
+}
+
+/* "X|S", as Microsoft marks Series X|S games: a small plate outlined in the text's colour. */
+.game-compat {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 1.5px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 14px;
+  letter-spacing: 0.04em;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 60%, transparent);
+}
+
+.game-compat-bar {
+  width: 1px;
+  height: 0.7em;
+  background: currentColor;
+}
+
+/* Small spaced caps above a control, like the "W KOLEKCJI" eyebrow. */
+/* German capitalises every noun: the dashboard's lower-case labels keep their capitals there. */
+html:lang(de) .lowercase {
+  text-transform: none;
+}
+
+.field-label {
+  margin-bottom: 0.5rem;
+  font-size: 11px;
+  /* Tight enough that a label wrapping onto two lines still reads as one. */
+  line-height: 1.45;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #8693a1;
+}
+
+/* ---------- Sheets of rows (CopySheet.tsx, SettingsMenu.tsx) ----------
+   One white card of rows, two columns wide once the sheet itself has room for them. Lines are each
+   cell's top border, pulled up over the card's own so the first row shares it. */
+.sheet-box {
+  container: sheet / inline-size;
+}
+
+.sheet {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  border-radius: 12px;
+  border: 1px solid #d5dbe1;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafb 100%);
+  box-shadow:
+    0 1px 0 #fff inset,
+    0 8px 20px -14px rgb(30 40 50 / 0.35);
+}
+
+.sheet > * {
+  margin-top: -1px;
+  border-top: 1px solid #e4e8ec;
+}
+
+@container sheet (min-width: 600px) {
+  .sheet {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sheet > :nth-child(odd):not(.sheet-wide) {
+    border-right: 1px solid #e4e8ec;
+  }
+}
+
+.sheet-wide {
+  grid-column: 1 / -1;
+  border-right: 0;
+}
+
+/* Only the two-column sheet has a cell to fill. */
+.sheet-filler {
+  display: none;
+}
+
+@container sheet (min-width: 600px) {
+  .sheet-filler {
+    display: block;
+  }
+}
+
+/* The sheet's rounded corners, kept by the rows that touch them. */
+.sheet > :first-child,
+.sheet > :first-child > .sheet-row {
+  border-top-left-radius: 11px;
+  border-top-right-radius: 11px;
+}
+
+@container sheet (min-width: 600px) {
+  .sheet > :first-child,
+  .sheet > :first-child > .sheet-row {
+    border-top-right-radius: 0;
+  }
+
+  .sheet > :nth-child(2),
+  .sheet > :nth-child(2) > .sheet-row {
+    border-top-right-radius: 11px;
+  }
+}
+
+.sheet > :last-child {
+  border-bottom-left-radius: 11px;
+  border-bottom-right-radius: 11px;
+}
+
+.sheet-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 14px;
+  font-size: 15px;
+  text-align: left;
+  color: #5f6a75;
+  transition: background-color 120ms;
+}
+
+.sheet-row:enabled:hover,
+a.sheet-row:hover,
+.sheet-row-open {
+  background: rgb(226 232 238 / 0.55);
+}
+
+.sheet-row:focus-visible {
+  outline: 2px solid #62c41f;
+  outline-offset: -2px;
+}
+
+/* What a settings row does, its icon standing where other rows have the chevron. */
+.sheet-row-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-left: auto;
+  margin-right: -2px;
+}
+
+.sheet-row-action svg {
+  width: 15px;
+  height: 15px;
+  color: #9aa4ae;
+}
+
+.sheet-row-label {
+  display: inline-block;
+  flex: none;
+}
+
+/* Some names are shared with lowercase controls elsewhere ("demo"); a row starts with a capital. */
+.sheet-row-label::first-letter {
+  text-transform: uppercase;
+}
+
+.sheet-row-value {
+  display: flex;
+  min-width: 0;
+  margin-left: auto;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: #1f272e;
+  text-align: right;
+}
+
+.sheet-row-value > svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  color: #5f6a75;
+}
+
+/* Room for descenders: the clipping that cuts long values short would cut them off a
+   text box trimmed to the baseline, as .nxe-label's is. */
+.sheet-row-value > span {
+  text-box: normal;
+  line-height: 1.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sheet-row-empty {
+  font-weight: 400;
+  color: #8693a1;
+}
+
+.sheet-row-on::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #58b81c;
+  box-shadow: 0 0 0 2px rgb(88 184 28 / 0.2);
+}
+
+.sheet-row-chevron {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  color: #9aa4ae;
+}
+
+.sheet-row-input {
+  min-width: 0;
+  flex: 1;
+  height: 44px;
+  background: transparent;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: #1f272e;
+  outline: none;
+}
+
+/* Suggestions still drop down as the place is typed; the arrow would only push the value
+   off the right edge the other rows keep. */
+.sheet-row-input::-webkit-calendar-picker-indicator {
+  display: none !important;
+}
+
+.sheet-row-input::placeholder {
+  font-weight: 400;
+  color: #8693a1;
+}
+
+.sheet-note {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px 12px;
+  font-size: 15px;
+  color: #5f6a75;
+}
+
+.sheet-note-input {
+  width: 100%;
+  resize: none;
+  background: transparent;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #1f272e;
+  outline: none;
+}
+
+/* ---------- The game card's head and tabs (see CopySheet.tsx) ---------- */
+
+/* Under the title: status, stars and tags in one line that wraps. */
+.play-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  margin-top: 14px;
+}
+
+/* A value alone in a small white pill, opening its menu like a sheet row. */
+.quick-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px 0 11px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f272e;
+  background: linear-gradient(180deg, #ffffff 0%, #f4f6f8 100%);
+  border: 1px solid #d5dbe1;
+  box-shadow:
+    0 1px 0 #fff inset,
+    0 4px 10px -8px rgb(30 40 50 / 0.45);
+  transition: border-color 120ms;
+}
+
+.quick-chip > svg:first-child {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+
+.quick-chip:enabled:hover,
+.quick-chip-open {
+  border-color: #9fd36e;
+}
+
+.quick-chip:focus-visible {
+  outline: 2px solid #62c41f;
+  outline-offset: 1px;
+}
+
+.quick-chip-chevron {
+  width: 10px;
+  height: 10px;
+  color: #8693a1;
+}
+
+/* Reads as a "+ tag" link until typed in. */
+
+.tag-editor {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* A tag: the white gloss pill of the status beside it, a small green tag in front. */
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 11px 0 10px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f272e;
+  background: linear-gradient(180deg, #ffffff 0%, #f4f6f8 100%);
+  border: 1px solid #d5dbe1;
+  box-shadow:
+    0 1px 0 #fff inset,
+    0 4px 10px -8px rgb(30 40 50 / 0.45);
+}
+
+.tag-chip > svg {
+  width: 13px;
+  height: 13px;
+  flex: none;
+  color: #4a9e12;
+  stroke-width: 2;
+}
+
+/* The cross stays quiet until it's reached for. */
+.tag-chip:has(button) {
+  padding-right: 4px;
+}
+
+.tag-chip button {
+  position: relative;
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border-radius: 999px;
+  color: #9aa5b1;
+  transition:
+    color 120ms,
+    background-color 120ms;
+}
+
+/* Like the cross clearing a filter in the toolbar. */
+.tag-chip button:hover {
+  color: #334155;
+  background: rgb(15 23 42 / 0.08);
+}
+
+.tag-chip button:focus-visible {
+  outline: 2px solid #62c41f;
+  outline-offset: 0;
+}
+
+.tag-chip button svg {
+  width: 9px;
+  height: 9px;
+}
+
+/* "+ tag": a green link as wide as its words; typing in it, it becomes a field lit green. */
+.tag-editor-input {
+  field-sizing: content;
+  min-width: 3ch;
+  max-width: 14rem;
+  height: 30px;
+  padding: 0 6px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f272e;
+  outline: none;
+  transition:
+    border-color 150ms,
+    box-shadow 150ms,
+    background-color 150ms;
+}
+
+/* Until it is clicked it reads as a link, "+ tag", so it takes the hand. */
+.tag-editor-input:not(:focus) {
+  cursor: pointer;
+}
+
+.tag-editor-input::placeholder {
+  color: var(--color-x360-dark, #3a7a10);
+}
+
+.tag-editor-input:hover:not(:focus)::placeholder {
+  color: #1f5a04;
+}
+
+/* Typing: a tag-shaped field set into the card, like the app's other fields, lit green. */
+.tag-editor-input:focus {
+  min-width: 9ch;
+  padding: 0 12px;
+  border: 1px solid #7ccf3a;
+  background: linear-gradient(180deg, #eef1f4, #ffffff 45%);
+  box-shadow:
+    0 1px 2px rgb(30 40 50 / 0.12) inset,
+    0 0 0 3px rgb(111 194 46 / 0.16),
+    0 0 10px -2px rgb(111 194 46 / 0.45);
+}
+
+.tag-editor-input:focus::placeholder {
+  color: #9aa5b1;
+}
+
+.tag-editor-input::-webkit-calendar-picker-indicator {
+  display: none !important;
+}
+
+/* The game and its copies: two tabs named like the section labels, the open one
+   underlined in green. */
+.card-tabs {
+  display: flex;
+  gap: 22px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgb(30 40 50 / 0.12);
+}
+
+/* A game's history (see GameHistory.tsx): a quiet timeline. Every mark is the same line
+   icon in the same grey ring; a thread joins each ring to the next without touching it. */
+.history {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 2px;
+}
+
+/* On a phone the whole card scrolls; one scroller inside another would only be in the way. */
+@media (min-width: 640px) {
+  .history {
+    max-height: min(360px, 42vh);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 10px;
+  }
+
+  /* A soft edge where more of the history waits: below at first, above once scrolled. */
+  .history[data-fade='bottom'] {
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 56px), transparent);
+  }
+
+  .history[data-fade='top'] {
+    mask-image: linear-gradient(to bottom, transparent, #000 40px);
+  }
+
+  .history[data-fade='top bottom'] {
+    mask-image: linear-gradient(to bottom, transparent, #000 40px, #000 calc(100% - 56px), transparent);
+  }
+}
+
+.history-entry {
+  position: relative;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: start;
+  column-gap: 12px;
+  padding: 7px 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: #2b333b;
+}
+
+/* From under this ring (7px + 28px) to above the next one, with 4px of air at each end. */
+.history-entry:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  top: 39px;
+  bottom: -3px;
+  left: 13.5px;
+  width: 1px;
+  background: #cfd6dc;
+}
+
+.history-mark {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  color: #5f6a75;
+  background: linear-gradient(180deg, #ffffff, #eef1f4);
+  box-shadow:
+    inset 0 0 0 1px #dbe1e6,
+    0 1px 2px rgb(30 40 50 / 0.08);
+}
+
+.history-mark svg {
+  width: 14px;
+  height: 14px;
+}
+
+.history-text,
+.history-when {
+  padding-top: 4px;
+}
+
+.history-when {
+  font-size: 12px;
+  color: #8693a1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+[data-theme='dark'] .history-entry {
+  color: #dfe5ea;
+}
+
+[data-theme='dark'] .history-entry:not(:last-child)::before {
+  background: #3a434c;
+}
+
+[data-theme='dark'] .history-mark {
+  color: #a7b2bd;
+  background: linear-gradient(180deg, #2c333a, #232930);
+  box-shadow:
+    inset 0 0 0 1px #3d464f,
+    0 1px 2px rgb(0 0 0 / 0.3);
+}
+
+.card-tab {
+  position: relative;
+  height: 34px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #8693a1;
+  transition: color 120ms;
+}
+
+.card-tab:hover,
+.card-tab[aria-selected='true'] {
+  color: #1f272e;
+}
+
+.card-tab[aria-selected='true']::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 -1px;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(180deg, #8be04a, #4a9e12);
+}
+
+.card-tab:focus-visible {
+  outline: 2px solid #62c41f;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* A note across the card, a glossy strip like the guide's rows, led by a lit icon: a copy
+   away on loan in red, a wish on its way in sky, a setting in place in green. */
+.notice {
+  --notice-light: #e0313f;
+  --notice-glow: rgb(224 49 63 / 0.45);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 6px 8px 6px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  color: #2b333b;
+  background: linear-gradient(180deg, #ffffff, #eef1f4);
+  border: 1px solid #d3dae1;
+  box-shadow:
+    0 1px 0 rgb(255 255 255) inset,
+    0 3px 8px -5px rgb(30 40 50 / 0.35);
+}
+
+.notice > svg {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  color: var(--notice-light);
+  filter: drop-shadow(0 0 4px var(--notice-glow));
+}
+
+/* A small white key at the strip's end, like the secondary buttons. */
+.notice-action {
+  flex: none;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #3d4852;
+  background: linear-gradient(180deg, #ffffff, #e9edf0);
+  border: 1px solid #c5cdd5;
+  box-shadow: 0 1px 0 #b5bec7;
+  transition:
+    border-color 150ms,
+    color 150ms;
+}
+
+.notice-action:hover {
+  color: #1d2328;
+  border-color: #6fc22e;
+}
+
+/* Keys side by side sit closer than the note's text does to them. */
+.notice-action + .notice-action {
+  margin-left: -7px;
+}
+
+/* The key that settles the note, e.g. "returned": glossy green like the main buttons. */
+.notice-action.notice-action-primary,
+[data-theme='dark'] .notice-action.notice-action-primary {
+  color: #fff;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 0.3);
+  background: linear-gradient(180deg, #a8ea6c 0%, #6fd02a 48%, #4fb012 52%, #5dc21e 100%);
+  border-color: #4a9e12;
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.5) inset;
+}
+
+.notice-action.notice-action-primary:hover {
+  filter: brightness(1.06);
+}
+
+.notice-sky {
+  --notice-light: #0b9ae0;
+  --notice-glow: rgb(11 154 224 / 0.45);
+}
+
+.notice-green {
+  --notice-light: #4fb012;
+  --notice-glow: rgb(79 176 18 / 0.4);
+}
+
+/* An error above the library: over the wallpaper a tinted note would sink into it, so it
+   is a solid panel like the toolbar, marked by a red light. */
+.app-alert {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 12px 12px 14px;
+  border-radius: 16px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #2b333b;
+}
+
+/* The warning is the console's own: the Red Ring of Death (see RingMark). */
+.app-alert-ring {
+  flex: none;
+  width: 36px;
+  height: 36px;
+}
+
+/* A failed console flashes its red lights; reduced motion keeps them steady. */
+@media (prefers-reduced-motion: no-preference) {
+  .ring-mark-fault .ring-led.is-on {
+    animation: ring-fault 1.1s steps(1, end) infinite;
+  }
+}
+
+@keyframes ring-fault {
+  50% {
+    opacity: 0.15;
+  }
+}
+
+@media (max-width: 639px) {
+  /* On a phone the message takes the width beside the light, the button goes under it. */
+  .app-alert {
+    flex-wrap: wrap;
+  }
+
+  .app-alert > .flex-1 {
+    flex-basis: calc(100% - 50px);
+  }
+
+  .app-alert-ring {
+    align-self: flex-start;
+  }
+
+  .app-alert .gloss-green {
+    margin-left: 50px;
+  }
+}
+
+/* Editing a loan where its note was: the form in a card of its own. */
+.loan-notice-form {
+  overflow: hidden;
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 1px rgb(216 50 61 / 0.35);
+}
+
+.loan-notice-form .loan-form {
+  background: rgb(240 82 90 / 0.06);
+}
+
+/* ---------- Reviewing an import (see ImportGames.tsx) ---------- */
+
+/* A row: tick, cover, title with its state, and the match in a column of one width; on a
+   phone the match drops under the title. */
+.import-row {
+  display: grid;
+  grid-template-columns: auto 40px minmax(0, 1fr) 15rem;
+  align-items: center;
+  gap: 0 14px;
+  padding: 10px 14px;
+}
+
+.import-row.is-off > :not(.nxe-check) {
+  opacity: 0.55;
+}
+
+@media (max-width: 639px) {
+  .import-row {
+    grid-template-columns: auto 40px minmax(0, 1fr);
+    gap: 8px 12px;
+  }
+
+  .import-row-match {
+    grid-column: 3;
+  }
+
+  .import-row-match:empty {
+    display: none;
+  }
+}
+
+/* What IGDB made of the row, as a small tag under the title. */
+.import-state {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 1px 7px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+}
+
+.import-state-ok {
+  color: #2d6a06;
+  background: rgb(98 196 31 / 0.16);
+}
+
+.import-state-warn {
+  color: #8a4b00;
+  background: rgb(247 181 28 / 0.22);
+}
+
+.import-state-copy {
+  color: #0c5a86;
+  background: rgb(14 165 233 / 0.13);
+}
+
+.import-state-muted {
+  color: #5b6672;
+  background: rgb(100 116 139 / 0.14);
+}
+
+/* A checkbox in the NXE manner: a small recessed well that lights up glossy green with a
+   white tick, like the green bars of the dashboard. */
+.nxe-check {
+  appearance: none;
+  display: grid;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  border-radius: 6px;
+  border: 1px solid #c2cad2;
+  background: linear-gradient(180deg, #e4e9ee, #f6f8fa);
+  box-shadow:
+    0 1px 2px rgb(30 40 50 / 0.16) inset,
+    0 1px 0 rgb(255 255 255 / 0.9);
+  cursor: pointer;
+  transition:
+    background 150ms,
+    border-color 150ms,
+    box-shadow 150ms;
+}
+
+.nxe-check::after {
+  content: '';
+  margin: auto;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='m2.2 6.3 2.4 2.4 5.2-5.4' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  opacity: 0;
+  transform: scale(0.6);
+  transition:
+    opacity 120ms,
+    transform 160ms cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+
+.nxe-check:hover:not(:disabled) {
+  border-color: #aab4be;
+}
+
+.nxe-check:checked {
+  border-color: #3f9a0c;
+  background: linear-gradient(180deg, #a8ea6c 0%, #6fd02a 48%, #4fb012 52%, #5dc21e 100%);
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.6) inset,
+    0 2px 5px -2px rgb(45 122 8 / 0.7);
+}
+
+.nxe-check:checked::after {
+  opacity: 1;
+  transform: none;
+}
+
+.nxe-check:focus-visible {
+  outline: 2px solid #5dc21e;
+  outline-offset: 2px;
+}
+
+.nxe-check:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+/* ---------- Taking the data out and back (see DataSettings.tsx) ---------- */
+
+.data-confirm {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #7a2e00;
+  background: rgb(247 181 28 / 0.16);
+  box-shadow: inset 0 0 0 1px rgb(217 154 11 / 0.45);
+}
+
+.data-confirm p {
+  margin-bottom: 8px;
+}
+
+.data-problem {
+  margin-top: 8px;
+  padding: 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #c0262d;
+}
+
+.data-hint {
+  margin-top: 8px;
+  padding: 0 4px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #6b7682;
+}
+
+/* ---------- The player's own rows (see SheetRows.tsx) ---------- */
+
+/* Five stars, each filled from the left by a clipped copy of itself, so halves show. */
+.star-rating {
+  display: inline-flex;
+  gap: 0;
+  padding: 4px 2px;
+  border-radius: 6px;
+  cursor: pointer;
+  /* A sideways slide sets the score; an up-and-down one still scrolls the card. */
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.star-rating[aria-disabled='true'] {
+  cursor: default;
+}
+
+.star-rating:focus-visible {
+  outline: 2px solid #62c41f;
+  outline-offset: 1px;
+}
+
+.star {
+  position: relative;
+  display: block;
+  width: 22px;
+  height: 22px;
+}
+
+.star svg {
+  width: 22px;
+  height: 22px;
+  fill: #dde3e9;
+  stroke: #c3ccd5;
+  stroke-width: 1;
+  stroke-linejoin: round;
+}
+
+.star-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  overflow: hidden;
+}
+
+.star-fill svg {
+  fill: #f7b51c;
+  stroke: #d99a0b;
+}
+
+/* Hovering previews the score in a lighter gold. */
+.star-rating-hover .star-fill svg {
+  fill: #ffd25e;
+}
+
+.loan-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 14px 12px;
+  font-size: 15px;
+  color: #5f6a75;
+  background: rgb(226 232 238 / 0.35);
+}
+
+.loan-form-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.loan-field {
+  display: flex;
+  flex: 1 1 9rem;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.loan-field .nxe-input {
+  height: 36px;
+  padding: 0 10px;
+  font-size: 15px;
+}
+
+/* Facts from IGDB in the game view (see GameFacts.tsx). The critics' score, the player's
+   own and PEGI are one set of labels: the same size, a number over a small name, glossy
+   like the app's buttons. Dark text on the light colours, white on the deep ones. */
+.facts-score,
+.facts-pegi {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  border-radius: 8px;
+  color: #fff;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.4),
+    inset 0 0 0 1px rgb(0 0 0 / 0.14),
+    0 3px 8px -4px rgb(20 30 40 / 0.45);
+}
+
+.facts-score b,
+.facts-pegi b {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.facts-score small,
+.facts-pegi small {
+  margin-top: 3px;
+  font-size: 7.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  line-height: 1;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.facts-score {
+  min-width: 40px;
+  padding: 0 7px;
+}
+
+.facts-pegi {
+  min-width: 36px;
+  padding: 0 6px;
+  background: #1d2329;
+}
+
+.facts-score-good {
+  background: linear-gradient(180deg, #5cb81f, #2f7f07);
+  text-shadow: 0 1px 1px rgb(0 0 0 / 0.3);
+}
+
+.facts-score-mixed {
+  color: #3d2800;
+  background: linear-gradient(180deg, #ffd860, #f2ae1a);
+}
+
+.facts-score-bad {
+  background: linear-gradient(180deg, #e9554f, #b8261f);
+  text-shadow: 0 1px 1px rgb(0 0 0 / 0.3);
+}
+
+/* The player's own score: white like a sheet row, the number in the gold of a star. */
+.facts-score-mine {
+  color: #1f272e;
+  background: linear-gradient(180deg, #ffffff, #eef1f4);
+  box-shadow:
+    inset 0 0 0 1px #d5dbe1,
+    0 3px 8px -4px rgb(20 30 40 / 0.35);
+}
+
+.facts-score-mine b {
+  color: #c98500;
+}
+
+/* PEGI in its official colours: green for 3 and 7, orange for 12 and 16, red for 18
+   (the spine's label takes the colours too). */
+.facts-pegi-3,
+.facts-pegi-7 {
+  background: #8dc63f;
+}
+
+.facts-pegi-12,
+.facts-pegi-16 {
+  background: #f7941d;
+}
+
+.facts-pegi-18 {
+  background: #e3141c;
+}
+
+.facts-pegi:is(.facts-pegi-3, .facts-pegi-7) {
+  color: #1d3a00;
+  background: linear-gradient(180deg, #a6d65f, #7cb52c);
+}
+
+.facts-pegi:is(.facts-pegi-12, .facts-pegi-16) {
+  color: #3d1f00;
+  background: linear-gradient(180deg, #ffab45, #ee8510);
+}
+
+.facts-pegi.facts-pegi-18 {
+  background: linear-gradient(180deg, #f2403f, #c40f16);
+  text-shadow: 0 1px 1px rgb(0 0 0 / 0.3);
+}
+
+[data-theme='dark'] .facts-score-mine {
+  color: #eef2f5;
+  background: linear-gradient(180deg, #2c333a, #232930);
+  box-shadow:
+    inset 0 0 0 1px #3d464f,
+    0 3px 8px -4px rgb(0 0 0 / 0.6);
+}
+
+[data-theme='dark'] .facts-score-mine b {
+  color: #ffc933;
+}
+
+/* ---------- Search fields ----------
+   The browser's own clear button is tiny, has no hand cursor and is missing in Firefox:
+   ClearSearch takes its place, a round target as big as the field allows. */
+input[type='search']::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+.search-clear {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  color: #8792a0;
+  transition:
+    color 150ms,
+    background-color 150ms;
+}
+
+.search-clear:hover {
+  color: #334155;
+  background: rgb(15 23 42 / 0.07);
+}
+
+.search-clear svg {
+  width: 12px;
+  height: 12px;
+}
+
+[data-theme='dark'] .search-clear:hover {
+  color: #f1f5f9;
+  background: rgb(255 255 255 / 0.1);
+}
+
+/* Text entry recessed into the panel, lit green while editing. */
+.nxe-input {
+  height: 40px;
+  padding: 0 12px;
+  font-size: 15px;
+  border-radius: 10px;
+  border: 1px solid #cfd6dd;
+  background: linear-gradient(180deg, #f3f5f7, #ffffff 40%);
+  box-shadow: 0 1px 2px rgb(30 40 50 / 0.1) inset;
+  outline: none;
+  transition:
+    border-color 150ms,
+    box-shadow 150ms;
+}
+
+.nxe-input::placeholder {
+  color: #9aa5b1;
+}
+
+.nxe-input:focus {
+  border-color: #6fc22e;
+  box-shadow:
+    0 1px 2px rgb(30 40 50 / 0.1) inset,
+    0 0 0 3px rgb(93 194 30 / 0.2);
+}
+
+/* ---------- Text-only view: the library as a table of contents ---------- */
+.title-index {
+  columns: 1;
+  column-gap: 3rem;
+  column-rule: 1px solid rgb(30 40 50 / 0.08);
+}
+
+@media (min-width: 640px) {
+  .title-index {
+    columns: 2;
+  }
+}
+
+@media (min-width: 1024px) {
+  .title-index {
+    columns: 3;
+  }
+}
+
+.title-index-section {
+  break-inside: avoid-column;
+  padding-bottom: 1rem;
+}
+
+/* Letter heading: large green initial, its count, and a rule fading to the right. */
+.title-index-letter {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin: 0 0 0.35rem;
+  font-size: 26px;
+  font-weight: 400;
+  line-height: 1.3;
+  color: var(--color-x360-dark);
+}
+
+.title-index-letter::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  align-self: center;
+  background: linear-gradient(90deg, rgb(45 122 8 / 0.35), rgb(45 122 8 / 0));
+}
+
+.title-index-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+  font-variant-numeric: tabular-nums;
+}
+
+.title-index-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 0 -0.6rem;
+  width: calc(100% + 1.2rem);
+  padding: 0.36rem 0.6rem;
+  border-radius: 7px;
+  text-align: left;
+  font-size: 14.5px;
+  color: #334155;
+  outline: none;
+  transition:
+    background 120ms,
+    color 120ms,
+    box-shadow 120ms;
+}
+
+/* Icons and marks sit on the text's x-height rather than its baseline. */
+.title-index-row > :is(span:has(svg), .game-compat) {
+  align-self: center;
+}
+
+.title-index-row :is(.game-rating, .game-compat) {
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* Hover / keyboard focus: the green glossy highlight bar of the dashboard menus. */
+.title-index-row:hover,
+.title-index-row:focus-visible {
+  color: #fff;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 0.3);
+  background: linear-gradient(180deg, #8fdf4f 0%, #62c41f 48%, #4caa10 52%, #57b918 100%);
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.45) inset,
+    0 2px 6px -2px rgb(45 122 8 / 0.6);
+}
+
+.title-index-row:focus-visible {
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.45) inset,
+    0 0 0 2px #fff,
+    0 0 0 4px var(--color-x360);
+}
+
+/* On the green bar the secondary bits turn white too. */
+.title-index-row:is(:hover, :focus-visible)
+  :is(
+    .title-index-year,
+    .text-sky-600,
+    .text-violet-600,
+    .text-rose-600,
+    .text-emerald-700,
+    .text-slate-500,
+    .status-icon,
+    .game-rating,
+    .game-compat
+  ) {
+  color: rgb(255 255 255 / 0.9);
+}
+
+.title-index-row:is(:hover, :focus-visible) .title-index-leader {
+  border-color: rgb(255 255 255 / 0.55);
+}
+
+/* Dotted leader running from the title to the year, as in a printed index. */
+.title-index-leader {
+  flex: 1;
+  min-width: 1rem;
+  border-bottom: 1.5px dotted rgb(100 116 139 / 0.3);
+  transform: translateY(-0.25em);
+}
+
+.title-index-year {
+  width: 2.5rem;
+  flex: none;
+  text-align: right;
+  font-size: 13px;
+  color: #94a3b8;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Previous/next arrows on the game view: at the screen edges beside the panel on wide
+   screens, down in the bottom corners on narrow ones where the panel fills the width. */
+.step-button {
+  position: fixed;
+  top: 50%;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  translate: 0 -50%;
+}
+
+.step-button-prev {
+  left: max(12px, calc(50% - 480px - 68px));
+}
+
+.step-button-next {
+  right: max(12px, calc(50% - 480px - 68px));
+}
+
+@media (max-width: 1099px) {
+  .step-button {
+    top: auto;
+    bottom: 16px;
+    translate: none;
+  }
+
+  .step-button .keycap {
+    display: none;
+  }
+}
+
+/* ---------- Phones: dialogs as bottom sheets ----------
+   The panel rises from the bottom edge, takes the full width and scrolls inside
+   itself, with a strip of the dim above it to tap away. Pulled down from the top of
+   its scroll it follows the finger and closes (see Dialog.tsx). */
+.sheet-grip {
+  display: none;
+}
+
+@media (max-width: 639px) {
+  .nxe-backdrop {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    overflow: hidden;
+  }
+
+  .nxe-panel {
+    width: 100%;
+    max-height: calc(100dvh - 64px);
+    margin: 0;
+    overflow-y: auto;
+    /* No stretch at the ends: pulled down at the top, the sheet itself follows the
+       finger (see Dialog.tsx), and nothing passes on to the page. */
+    overscroll-behavior-y: none;
+    border-radius: 20px 20px 0 0;
+    animation: sheet-in 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  .nxe-panel.is-closing {
+    animation: sheet-out 220ms cubic-bezier(0.4, 0, 1, 1) both;
+  }
+
+  /* The card in it: square at the bottom, no side rims, clear of the home bar. */
+  .nxe-panel > .gloss {
+    border-width: 1px 0 0;
+    border-radius: 20px 20px 0 0;
+    padding-top: 28px;
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
+  }
+
+  /* The grabber stays on top while the sheet scrolls. */
+  .sheet-grip {
+    display: block;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    height: 0;
+  }
+
+  .sheet-grip::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    width: 40px;
+    height: 5px;
+    margin-left: -20px;
+    border-radius: 3px;
+    background: rgb(30 40 50 / 0.22);
+  }
+
+  /* The sheet covers all but a strip at the top, too little to show the blurred cover;
+     blurring it again on every frame of scrolling costs a phone more than it gives. */
+  .nxe-backdrop-art {
+    display: none;
+  }
+
+  /* The arrows to the neighbouring games ride in the strip above the sheet. */
+  .step-button {
+    top: 10px;
+    bottom: auto;
+  }
+
+  .step-button-prev {
+    left: 12px;
+  }
+
+  .step-button-next {
+    right: 12px;
+  }
+}
+
+@media (max-width: 639px) and (prefers-reduced-motion: reduce) {
+  .nxe-panel,
+  .nxe-panel.is-closing {
+    animation: none;
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes sheet-out {
+  to {
+    transform: translateY(100%);
+  }
+}
+
+/* ---------- Toasts ----------
+   After the Xbox 360 achievement pop-up, in its three moves. The emblem pops in first with
+   a twist and a slight overshoot; the smoky grey bar then slides out from behind it to the
+   right and a glint runs along it; the words come last. Leaving plays it backwards: the
+   words go, the bar folds back into the emblem, and the emblem shrinks away.
+   The bar is the toast's ::before, clipped on its own, so the emblem and the words above it
+   keep their own timing. */
+.toast-dock {
+  position: fixed;
+  inset: auto 0 32px;
+  z-index: 70;
+  display: flex;
+  justify-content: center;
+  padding-inline: 16px;
+  pointer-events: none;
+}
+
+.toast {
+  --height: 48px;
+  /* The bar folded down to a circle under the emblem, and opened out to the full pill. */
+  --folded: inset(0 calc(100% - var(--height)) 0 0 round 999px);
+  --open: inset(0 0 0 0 round 999px);
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: min(260px, 100%);
+  max-width: min(460px, 100%);
+  height: var(--height);
+  padding: 0 4px 0 3px;
+  color: #ececec;
+  pointer-events: auto;
+}
+
+.toast::before,
+.toast::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+/* The bar: pale outer rim with a dark line inside it, like the console's. */
+.toast::before {
+  background: linear-gradient(180deg, rgb(74 76 79 / 0.95), rgb(44 45 47 / 0.95) 50%, rgb(33 34 36 / 0.95));
+  border: 1.5px solid #a4a7aa;
+  box-shadow:
+    inset 0 0 0 1px rgb(0 0 0 / 0.6),
+    inset 0 2px 0 rgb(255 255 255 / 0.1),
+    0 10px 26px rgb(0 0 0 / 0.45);
+  backdrop-filter: blur(6px);
+  animation: toast-bar-open 480ms cubic-bezier(0.22, 1, 0.36, 1) 200ms both;
+}
+
+/* One glint along the bar once it is open. */
+.toast::after {
+  background: linear-gradient(105deg, transparent 38%, rgb(255 255 255 / 0.16) 50%, transparent 62%) no-repeat;
+  background-size: 260% 100%;
+  animation: toast-glint 900ms ease-out 640ms both;
+}
+
+.toast-orb {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.5));
+  animation: toast-orb-in 440ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes toast-orb-in {
+  from {
+    opacity: 0;
+    transform: scale(0) rotate(-140deg);
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+@keyframes toast-bar-open {
+  0% {
+    opacity: 0;
+    clip-path: var(--folded);
+  }
+  15% {
+    opacity: 1;
+    clip-path: var(--folded);
+  }
+  100% {
+    clip-path: var(--open);
+  }
+}
+
+@keyframes toast-glint {
+  from {
+    background-position: 130% 0;
+  }
+  to {
+    background-position: -30% 0;
+    opacity: 0;
+  }
+}
+
+/* Leaving, backwards: words out, bar folded into the emblem, emblem gone. */
+.toast.is-leaving :is(.toast-text, .toast-undo) {
+  animation: toast-words-out 140ms ease-in both;
+}
+
+.toast.is-leaving::before {
+  animation: toast-bar-fold 260ms cubic-bezier(0.55, 0, 0.75, 0.2) 100ms both;
+}
+
+.toast.is-leaving::after {
+  animation: none;
+  opacity: 0;
+}
+
+.toast.is-leaving .toast-orb {
+  animation: toast-orb-out 220ms cubic-bezier(0.5, 0, 0.75, 0) 330ms both;
+}
+
+@keyframes toast-bar-fold {
+  from {
+    clip-path: var(--open);
+  }
+  85% {
+    opacity: 1;
+    clip-path: var(--folded);
+  }
+  to {
+    opacity: 0;
+    clip-path: var(--folded);
+  }
+}
+
+@keyframes toast-orb-out {
+  to {
+    opacity: 0;
+    transform: scale(0) rotate(120deg);
+  }
+}
+
+@keyframes toast-words-out {
+  to {
+    opacity: 0;
+  }
+}
+
+.toast-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  /* Centred on capitals and baselines the two lines read low, being mostly lowercase: the
+     bottom padding lifts them 1.5px onto the pill's optical centre, as on the buttons. */
+  padding: 0 6px 3px 0;
+  font-size: 14px;
+  line-height: 1.25;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 0.6);
+  animation: toast-words 300ms ease-out 560ms both;
+}
+
+.toast-kicker,
+.toast-title {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Undo sits apart behind a thin divider, quieter than the message. */
+.toast-undo {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  align-self: stretch;
+  margin: 8px 0;
+  padding: 0 11px 0 12px;
+  border-left: 1px solid rgb(255 255 255 / 0.16);
+  border-radius: 0 999px 999px 0;
+  color: #c4c6c8;
+  font-size: 13px;
+  line-height: 1;
+  padding-bottom: 2px;
+  animation: toast-words 300ms ease-out 640ms both;
+  transition: color 150ms;
+}
+
+.toast-undo:hover {
+  color: #fff;
+}
+
+/* A smoked keycap to suit the dark bar. */
+.toast-undo .toast-keycap {
+  border-color: rgb(255 255 255 / 0.22);
+  background: rgb(255 255 255 / 0.08);
+  box-shadow: 0 1px 0 rgb(0 0 0 / 0.5);
+  color: #d4d6d8;
+}
+
+@keyframes toast-words {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+}
+
+@media (max-width: 639px) {
+  /* Same 14px text as on desktop; only the bar gets a touch shorter. */
+  .toast {
+    --height: 46px;
+    min-width: 0;
+  }
+
+  .toast-orb {
+    width: 38px;
+    height: 38px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast::before,
+  .toast::after,
+  .toast-orb,
+  .toast-text,
+  .toast-undo,
+  .toast.is-leaving :is(.toast-orb, .toast-text, .toast-undo),
+  .toast.is-leaving::before {
+    animation: none;
+  }
+
+  .toast::after {
+    opacity: 0;
+  }
+}
+
+/* Search results in the add dialog: a wrapping wall of cases. */
+.add-results {
+  display: grid;
+  /* Each result pads its own hover plate (12px), so the plates nearly touch and the covers
+     line up with the search field's edge. */
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 4px;
+  max-height: min(60vh, 560px);
+  margin-inline: -12px;
+  padding: 0 0 8px;
+  overflow-y: auto;
+}
+
+/* Where it goes and what copy it is, slid in under the details. */
+.add-choose {
+  animation: toast-words 280ms ease-out both;
+}
+
+/* One line of a description still loading: a soft bar on the line's own height. */
+.summary-skeleton {
+  display: flex;
+  align-items: center;
+  height: 1lh;
+}
+
+/* The bar itself, drawn alone so its rounded ends are true half circles. */
+.summary-skeleton::before {
+  content: '';
+  flex: 1;
+  height: 0.36lh;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgb(30 40 50 / 0.07), rgb(30 40 50 / 0.12), rgb(30 40 50 / 0.07)) 0 0 / 200% 100%;
+  animation: summary-shimmer 1.2s linear infinite;
+}
+
+@keyframes summary-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .summary-skeleton::before {
+    animation: none;
+  }
+}
+
+/* ---------- Tooltips (see Tooltips.tsx) ----------
+   A small charcoal plate with a pale rim and a pointer, like the dashboard's button
+   hints. It shows after a short rest (see Tooltips.tsx) with a quick fade, and fades
+   out a little slower when left, so moving across the toolbar never flickers. */
+.tooltip {
+  position: fixed;
+  z-index: 100;
+  max-width: min(280px, calc(100vw - 16px));
+  padding: 5px 10px 6px;
+  border-radius: 7px;
+  font-size: 13px;
+  line-height: 1.25;
+  color: #f3f6f8;
+  background: linear-gradient(180deg, #4a5157 0%, #2b3035 55%, #24282c 100%);
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.22) inset,
+    0 1px 0 rgb(255 255 255 / 0.14) inset,
+    0 0 0 1px rgb(0 0 0 / 0.35),
+    0 6px 16px -4px rgb(0 0 0 / 0.45);
+  pointer-events: none;
+  white-space: normal;
+  text-wrap: balance;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 180ms ease-out;
+}
+
+.tooltip[data-visible] {
+  opacity: 1;
+  transition-duration: 120ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tooltip {
+    transition: none;
+  }
+}
+
+/* The pointer: a rotated square sharing the plate's colours, cut by the plate's edge. */
+.tooltip::after {
+  content: '';
+  position: absolute;
+  left: var(--arrow-x, 50%);
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  rotate: 45deg;
+  background: #26292d;
+  box-shadow: 1px 1px 0 rgb(255 255 255 / 0.18);
+}
+
+.tooltip[data-side='above']::after {
+  bottom: -4px;
+}
+
+.tooltip[data-side='below']::after {
+  top: -4px;
+  background: #474e54;
+  box-shadow: -1px -1px 0 rgb(255 255 255 / 0.22);
+}
+
+/* Who made the app, the last line of the panel under the build info. */
+.settings-credit {
+  padding: 2px 4px 4px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #6b7682;
+}
+
+.settings-flag {
+  display: inline-block;
+  width: 14px;
+  height: 9px;
+  margin-left: 5px;
+  vertical-align: -0.5px;
+  border-radius: 1.5px;
+  box-shadow: 0 0 0 0.5px rgb(30 40 50 / 0.35);
+}
+
+.settings-credit b {
+  font-weight: 600;
+  color: #39424b;
+}
+
+/* ---------- Dark theme ----------
+   [data-theme='dark'] on <html> (see lib/settings.tsx). The panels turn graphite, glossy
+   as the dashboard's own dark blades, and the green stays the accent. Game cases, their
+   stickers and age labels are things on a shelf and keep their colours. */
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  /* Tailwind's slate scale turned over, so text-slate-700 and friends read light on dark
+     and faint tints (bg-slate-900/5) lighten instead of darken. */
+  --color-slate-50: #1a1f25;
+  --color-slate-100: #20262d;
+  --color-slate-200: #2a313a;
+  --color-slate-300: #3a434d;
+  --color-slate-400: #8a96a2;
+  --color-slate-500: #a5b0bb;
+  --color-slate-600: #bdc6cf;
+  --color-slate-700: #c8d0d8;
+  --color-slate-800: #dee4ea;
+  --color-slate-900: #eef2f5;
+  --color-slate-950: #f7f9fb;
+  /* Accents a shade lighter, to keep their contrast on graphite. */
+  --color-x360-dark: #8fd65a;
+  --color-amber-700: #f5c04a;
+  --color-amber-950: #fff4d6;
+  --color-rose-50: rgb(255 90 120 / 0.12);
+  --color-rose-300: rgb(255 120 140 / 0.45);
+  --color-rose-600: #fb7185;
+  --color-rose-700: #fda4af;
+  --color-sky-600: #4cc2f5;
+  --color-sky-900: #d6efff;
+  --color-emerald-700: #6fdc9f;
+  --color-violet-600: #b49cff;
+}
+
+[data-theme='dark'] body {
+  color: #e3e8ed;
+  background: #15191d;
+}
+
+[data-theme='dark'] .gloss {
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.07) 0, rgb(255 255 255 / 0) 2.75rem),
+    linear-gradient(180deg, rgb(43 48 54 / 0.97) 0%, rgb(28 32 37 / 0.96) 100%);
+  border-color: rgb(255 255 255 / 0.1);
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.08) inset,
+    0 10px 30px -12px rgb(0 0 0 / 0.6);
+}
+
+[data-theme='dark'] .nxe-tray {
+  background: linear-gradient(180deg, #30353b 0%, #25292e 50%, #1f2327 100%);
+  border-color: rgb(255 255 255 / 0.1);
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.35),
+    0 14px 34px -18px rgb(0 0 0 / 0.7);
+}
+
+[data-theme='dark'] .nxe-field {
+  background: linear-gradient(180deg, #3a4047 0%, #30353b 55%, #2a2f35 100%);
+  border-color: #474e56;
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.08) inset,
+    0 1px 2px rgb(0 0 0 / 0.3);
+}
+
+[data-theme='dark'] .nxe-field:hover,
+[data-theme='dark'] .nxe-field:focus-within,
+[data-theme='dark'] .nxe-field-open {
+  border-color: #59616a;
+  background: linear-gradient(180deg, #23282d 0%, #2a2f35 60%, #30353b 100%);
+  box-shadow:
+    0 1px 3px rgb(0 0 0 / 0.45) inset,
+    0 1px 0 rgb(255 255 255 / 0.06);
+}
+
+[data-theme='dark'] button.nxe-field:active:not(:disabled) {
+  background: linear-gradient(180deg, #1d2125, #262b30);
+  box-shadow:
+    0 2px 4px rgb(0 0 0 / 0.5) inset,
+    0 1px 0 rgb(255 255 255 / 0.06);
+}
+
+[data-theme='dark'] .nxe-slot,
+[data-theme='dark'] .view-switch {
+  background: linear-gradient(180deg, rgb(16 19 22 / 0.85), rgb(30 34 39 / 0.85));
+  box-shadow:
+    0 1px 3px rgb(0 0 0 / 0.5) inset,
+    0 1px 0 rgb(255 255 255 / 0.06);
+}
+
+[data-theme='dark'] .nxe-menu {
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.07), rgb(255 255 255 / 0) 40px),
+    linear-gradient(180deg, rgb(44 49 55 / 0.98), rgb(30 34 39 / 0.98));
+  border-color: rgb(255 255 255 / 0.1);
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.4),
+    0 4px 10px -4px rgb(0 0 0 / 0.4),
+    0 22px 44px -16px rgb(0 0 0 / 0.75);
+}
+
+[data-theme='dark'] .nxe-menu-item {
+  color: #d3dae1;
+}
+
+[data-theme='dark'] .nxe-menu-item-selected {
+  color: #fff;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.4);
+}
+
+[data-theme='dark'] .nxe-menu-item:not(.nxe-menu-item-selected).is-highlighted {
+  background: rgb(255 255 255 / 0.07);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.35) inset;
+}
+
+[data-theme='dark'] .nxe-menu-item-neutral::after,
+[data-theme='dark'] .stats-divider {
+  background: rgb(255 255 255 / 0.1);
+}
+
+[data-theme='dark'] .keycap {
+  color: #b9c2cb;
+  background: linear-gradient(180deg, #3d434a, #2c3137);
+  border-color: #4d555e;
+  box-shadow: 0 1px 0 #15191d;
+}
+
+[data-theme='dark'] .flag-toggle {
+  color: #b2bcc6;
+}
+
+[data-theme='dark'] .flag-toggle[aria-pressed='true'],
+[data-theme='dark'] .size-slider {
+  background: linear-gradient(180deg, rgb(16 19 22 / 0.85), rgb(30 34 39 / 0.85));
+  box-shadow:
+    0 1px 3px rgb(0 0 0 / 0.5) inset,
+    0 1px 0 rgb(255 255 255 / 0.06);
+}
+
+[data-theme='dark'] .size-slider-end {
+  color: #b4bec8;
+}
+
+[data-theme='dark'] .size-slider-end:hover:not(:disabled) {
+  color: #f1f4f7;
+}
+
+[data-theme='dark'] .size-slider-rail {
+  background: linear-gradient(180deg, #121518, #23282d);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.6) inset;
+}
+
+[data-theme='dark'] .size-slider-notch {
+  background: rgb(200 210 220 / 0.3);
+}
+
+[data-theme='dark'] .view-switch-option:hover {
+  color: #f1f4f7;
+}
+
+[data-theme='dark'] .flag-toggle-icon {
+  color: #6f7983;
+}
+
+/* Sheets of rows: the card, settings, filters. */
+[data-theme='dark'] .sheet {
+  border-color: #3b424a;
+  background: linear-gradient(180deg, #2c3137 0%, #262a2f 100%);
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.05) inset,
+    0 8px 20px -14px rgb(0 0 0 / 0.7);
+}
+
+[data-theme='dark'] .sheet > * {
+  border-top-color: #353c43;
+}
+
+[data-theme='dark'] .sheet > :nth-child(odd):not(.sheet-wide) {
+  border-right-color: #353c43;
+}
+
+[data-theme='dark'] .sheet-row:enabled:hover,
+[data-theme='dark'] a.sheet-row:hover,
+[data-theme='dark'] .sheet-row-open {
+  background: rgb(255 255 255 / 0.05);
+}
+
+[data-theme='dark'] .sheet-row-value,
+[data-theme='dark'] .sheet-row-input,
+[data-theme='dark'] .sheet-note-input,
+[data-theme='dark'] .stats-row b {
+  color: #eef2f5;
+}
+
+[data-theme='dark'] .sheet-row-empty,
+[data-theme='dark'] .field-label,
+[data-theme='dark'] .filter-group-label,
+[data-theme='dark'] .wallpaper-group-label,
+[data-theme='dark'] .settings-about,
+[data-theme='dark'] .settings-credit,
+[data-theme='dark'] .filter-panel-foot,
+[data-theme='dark'] .settings-heading,
+[data-theme='dark'] .settings-back,
+[data-theme='dark'] .title-index-count,
+[data-theme='dark'] .title-index-year {
+  color: #a7b2bd;
+}
+
+[data-theme='dark'] .filter-panel .sheet-row-value:not(.sheet-row-empty) {
+  color: #8fd65a;
+}
+
+[data-theme='dark'] .stats-row,
+[data-theme='dark'] .wallpaper-name {
+  color: #c3ccd5;
+}
+
+[data-theme='dark'] .settings-about b,
+[data-theme='dark'] .settings-credit b {
+  color: #dbe1e7;
+}
+
+[data-theme='dark'] .settings-about,
+[data-theme='dark'] .filter-panel-foot {
+  border-top-color: rgb(255 255 255 / 0.1);
+}
+
+[data-theme='dark'] .settings-about code {
+  background: rgb(255 255 255 / 0.08);
+}
+
+[data-theme='dark'] .nxe-input {
+  border-color: #474e56;
+  background: linear-gradient(180deg, #1c2024, #24292e 40%);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.4) inset;
+}
+
+[data-theme='dark'] .title-index-row {
+  color: #d3dae1;
+}
+
+[data-theme='dark'] .title-index-leader {
+  border-bottom-color: rgb(200 210 220 / 0.2);
+}
+
+[data-theme='dark'] .summary-skeleton::before {
+  background-image: linear-gradient(90deg, rgb(255 255 255 / 0.06), rgb(255 255 255 / 0.11), rgb(255 255 255 / 0.06));
+}
+
+[data-theme='dark'] .nxe-scroll::-webkit-scrollbar-track {
+  background: linear-gradient(90deg, transparent 4px, rgb(255 255 255 / 0.07) 4px 6px, transparent 6px);
+}
+
+[data-theme='dark'] .nxe-scroll::-webkit-scrollbar-thumb:not(:hover):not(:active) {
+  background: linear-gradient(90deg, #4b535b, #6f7882 50%, #4b535b) padding-box;
+  box-shadow:
+    inset 0 0 0 1px rgb(0 0 0 / 0.4),
+    inset 0 1px 0 rgb(255 255 255 / 0.08);
+}
+
+/* Utility backgrounds the scale swap can't turn: white washes, the dialog's dim, the
+   prompt's code block. */
+[data-theme='dark'] .quick-chip {
+  color: #eef2f5;
+  background: linear-gradient(180deg, #2c333a 0%, #232930 100%);
+  border-color: #3d464f;
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.06) inset,
+    0 4px 10px -8px rgb(0 0 0 / 0.6);
+}
+
+[data-theme='dark'] .quick-chip:enabled:hover,
+[data-theme='dark'] .quick-chip-open {
+  border-color: #5c8f35;
+}
+
+[data-theme='dark'] .tag-chip {
+  color: #eef2f5;
+  background: linear-gradient(180deg, #2c333a 0%, #232930 100%);
+  border-color: #3d464f;
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.06) inset,
+    0 4px 10px -8px rgb(0 0 0 / 0.6);
+}
+
+[data-theme='dark'] .tag-chip > svg {
+  color: #8fd65a;
+}
+
+[data-theme='dark'] .tag-chip button {
+  color: #7d8994;
+}
+
+[data-theme='dark'] .tag-chip button:hover {
+  color: #eef2f5;
+  background: rgb(255 255 255 / 0.1);
+}
+
+[data-theme='dark'] .tag-editor-input {
+  color: #eef2f5;
+}
+
+[data-theme='dark'] .tag-editor-input:focus {
+  border-color: #6fc22e;
+  background: linear-gradient(180deg, #1a1e22, #23292e 45%);
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.45) inset,
+    0 0 0 3px rgb(111 194 46 / 0.18),
+    0 0 10px -2px rgb(111 194 46 / 0.5);
+}
+
+/* Over the dark theme's grey for every placeholder: "+ tag" stays green. */
+:root[data-theme='dark'] .tag-editor-input:not(:focus)::placeholder {
+  color: var(--color-x360-dark);
+}
+
+[data-theme='dark'] .card-tabs {
+  border-bottom-color: rgb(255 255 255 / 0.1);
+}
+
+[data-theme='dark'] .card-tab {
+  color: #8995a1;
+}
+
+[data-theme='dark'] .card-tab:hover,
+[data-theme='dark'] .card-tab[aria-selected='true'] {
+  color: #eef2f5;
+}
+
+[data-theme='dark'] .nxe-check {
+  border-color: #4a525b;
+  background: linear-gradient(180deg, #16191d, #23282d);
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.5) inset,
+    0 1px 0 rgb(255 255 255 / 0.06);
+}
+
+[data-theme='dark'] .nxe-check:checked {
+  border-color: #3f9a0c;
+  background: linear-gradient(180deg, #a8ea6c 0%, #6fd02a 48%, #4fb012 52%, #5dc21e 100%);
+}
+
+[data-theme='dark'] .import-state-ok {
+  color: #9be15d;
+}
+
+[data-theme='dark'] .import-state-warn {
+  color: #ffc933;
+}
+
+[data-theme='dark'] .import-state-copy {
+  color: #7fd4ff;
+}
+
+[data-theme='dark'] .import-state-muted {
+  color: #a7b2bd;
+}
+
+[data-theme='dark'] .app-alert {
+  color: #e3e8ed;
+}
+
+[data-theme='dark'] .notice {
+  --notice-light: #ff5c69;
+  color: #e3e8ed;
+  background: linear-gradient(180deg, #2f353b, #262b30);
+  border-color: #3d464f;
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.06) inset,
+    0 3px 8px -4px rgb(0 0 0 / 0.6);
+}
+
+[data-theme='dark'] .notice-action {
+  color: #dfe5ea;
+  background: linear-gradient(180deg, #3d434a, #2c3137);
+  border-color: #4d555e;
+  box-shadow: 0 1px 0 #15191d;
+}
+
+[data-theme='dark'] .notice-action:hover {
+  color: #fff;
+  border-color: #6fc22e;
+}
+
+[data-theme='dark'] .loan-notice-form {
+  box-shadow: inset 0 0 0 1px rgb(240 82 90 / 0.35);
+}
+
+[data-theme='dark'] .notice-sky {
+  --notice-light: #38bdf8;
+}
+
+[data-theme='dark'] .notice-green {
+  --notice-light: #7ad83a;
+}
+
+[data-theme='dark'] .data-confirm {
+  color: #ffd98a;
+}
+
+[data-theme='dark'] .data-problem {
+  color: #ff8a92;
+}
+
+[data-theme='dark'] .data-hint {
+  color: #a7b2bd;
+}
+
+[data-theme='dark'] .star svg {
+  fill: #3a434c;
+  stroke: #4c5660;
+}
+
+[data-theme='dark'] .star-fill svg {
+  fill: #f7b51c;
+  stroke: #d99a0b;
+}
+
+[data-theme='dark'] .star-rating-hover .star-fill svg {
+  fill: #ffd25e;
+}
+
+[data-theme='dark'] .loan-form {
+  color: #c4cdd5;
+  background: rgb(255 255 255 / 0.03);
+}
+
+[data-theme='dark'] .sheet-grip::before {
+  background: rgb(255 255 255 / 0.28);
+}
+
+[data-theme='dark'] .nxe-backdrop {
+  background-color: rgb(6 8 11 / 0.78);
+}
+
+[data-theme='dark'] :is(.bg-white\/90, .bg-white\/60, .bg-white\/50, .bg-white\/40) {
+  background-color: rgb(20 24 28 / 0.6);
+}
+
+[data-theme='dark'] :is(.hover\:bg-white\/60:hover, .focus-visible\:bg-white\/60:focus-visible) {
+  background-color: rgb(255 255 255 / 0.06);
+}
+
+[data-theme='dark'] pre.bg-slate-800\/90 {
+  background-color: #0e1114;
+  color: #dbe2e8;
+}
+
+[data-theme='dark'] .sheet-row,
+[data-theme='dark'] .sheet-row-label {
+  color: #c4cdd5;
+}
+
+[data-theme='dark'] .sheet-note,
+[data-theme='dark'] .sheet-row-value > svg,
+[data-theme='dark'] .view-switch-option:not([aria-checked='true']) {
+  color: #b4bec8;
+}
+
+[data-theme='dark'] .sheet-row-chevron,
+[data-theme='dark'] .sheet-row-action svg {
+  color: #8995a1;
+}
+
+[data-theme='dark'] :is(.sheet-row-input, .sheet-note-input, .nxe-input, input, textarea)::placeholder {
+  color: #8995a1;
+}
+
+[data-theme='dark'] .settings-back:hover {
+  color: #eef2f5;
+}
+
+[data-theme='dark'] .wallpaper-option[aria-checked='true'] .wallpaper-name,
+[data-theme='dark'] .stats-row-active .text-slate-400 {
+  color: #8fd65a;
+}
+
+/* The wallpaper a step dimmer, so it sits behind graphite panels rather than outshining them. */
+[data-theme='dark'] .nxe-stage-layer {
+  filter: brightness(0.72) saturate(0.92);
+}
+
+/* The #/ui gallery (pages/UiPage.tsx): shelves sit on a dark wallpaper-like ground, as in the library. */
+.ui-shelf {
+  padding: 24px;
+  border-radius: 18px;
+  background: radial-gradient(120% 140% at 20% 0%, #3f8f1a, #12301a 55%, #0b1a12);
+}
+
+/* The steps to get IGDB keys (see ServerSetup.tsx): numbered in green discs. */
+.setup-steps {
+  display: grid;
+  gap: 12px;
+  counter-reset: step;
+  font-size: 15px;
+  color: #3d4852;
+}
+
+.setup-steps li {
+  position: relative;
+  padding-left: 36px;
+  counter-increment: step;
+}
+
+.setup-steps li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: -1px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(180deg, #8ddc4a, #4fb012);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.5) inset;
+}
+
+.setup-code {
+  padding: 1px 6px;
+  border-radius: 5px;
+  font-size: 13px;
+  background: rgb(100 116 139 / 0.14);
+}
+
+[data-theme='dark'] .setup-steps {
+  color: #c9d1d9;
+}
+
+[data-theme='dark'] .setup-code {
+  background: rgb(255 255 255 / 0.1);
+}
+
+/* Known values offered under a field as it is typed (see Suggestions.tsx). */
+.suggest {
+  position: relative;
+  display: block;
+}
+
+.tag-editor .suggest {
+  display: inline-block;
+}
+
+.suggest-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: max(100%, 11rem);
+  max-height: 240px;
+  padding: 4px;
+  overflow-y: auto;
+  font-weight: 400;
+}
+
+.loan-field .suggest-input {
+  width: 100%;
+  padding-right: 34px;
+}
+
+/* The chevron of the app's menus, opening the names already lent to. */
+.suggest-toggle {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  translate: 0 -50%;
+  border-radius: 7px;
+  color: #7b8692;
+}
+
+.suggest-toggle:hover {
+  color: #2b333b;
+}
+
+.suggest-toggle svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* A day field with the app's calendar icon. The browser's own picker button stays, made
+   invisible over the icon, so clicking the icon still opens the calendar. */
+.date-field {
+  position: relative;
+  display: block;
+}
+
+.date-field input {
+  position: relative;
+  width: 100%;
+  padding-right: 36px;
+}
+
+.date-field input::-webkit-calendar-picker-indicator {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 36px;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.date-field > svg {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  width: 17px;
+  height: 17px;
+  translate: 0 -50%;
+  color: #7b8692;
+  pointer-events: none;
+}
+
+/* Firefox draws its own icon, which can't be hidden: it keeps that one. */
+@supports (-moz-appearance: none) {
+  .date-field > svg {
+    display: none;
+  }
+
+  .date-field input {
+    padding-right: 10px;
+  }
+}
+
+[data-theme='dark'] :is(.suggest-toggle, .date-field > svg) {
+  color: #9aa5b1;
+}
+
+[data-theme='dark'] .suggest-toggle:hover {
+  color: #eef2f5;
+}

@@ -1,0 +1,19 @@
+node_modules
+dist
+.env.local
+.env.*.local
+*.log
+data/*.tmp
+# Your own library; the repo only carries the empty starter.
+data/games.json
+data/backups
+# Keys and login set in the app while developing.
+data/config.json
+.playwright-mcp
+library-data
+src/assets/fonts/*
+!src/assets/fonts/.gitkeep
+# End-to-end test runs.
+e2e/.data
+test-results
+playwright-report

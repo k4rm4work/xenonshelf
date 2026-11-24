@@ -1,0 +1,43 @@
+name: Improve a translation
+description: A wrong or clumsy word in the app, or a new language you'd like to help with.
+labels: [translation]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        XenonShelf speaks English, Español, Português (Brasil), Français, Deutsch and Polski.
+        The translations were written carefully but not all by native speakers, so corrections
+        are very welcome. Write in the language you are correcting, or in English.
+  - type: dropdown
+    id: language
+    attributes:
+      label: Language
+      options:
+        - English
+        - Español
+        - Português (Brasil)
+        - Français
+        - Deutsch
+        - Polski
+        - A new language
+    validations:
+      required: true
+  - type: textarea
+    id: where
+    attributes:
+      label: Where in the app
+      description: The screen or the button, and the text it shows now. A screenshot helps.
+    validations:
+      required: true
+  - type: textarea
+    id: better
+    attributes:
+      label: What it should say
+      description: Your wording, and why if it isn't obvious (e.g. the term collectors use).
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: Shown at the bottom of the settings.

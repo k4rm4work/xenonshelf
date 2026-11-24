@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    // validateLibrary.ts also runs in the server under plain Node, which needs the .ts.
+    "allowImportingTsExtensions": true,
+    "jsx": "react-jsx",
+    "resolveJsonModule": true,
+    "noEmit": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "skipLibCheck": true,
+    "types": ["vite/client"]
+  },
+  "include": ["src"],
+  // The tests run under Node (tsconfig.test.json); the app itself must not reach for it.
+  "exclude": ["src/**/*.test.ts"]
+}

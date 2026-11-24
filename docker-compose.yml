@@ -1,0 +1,19 @@
+# Fixed project name, so containers and images are called xenonshelf whatever the folder is.
+name: xenonshelf
+
+services:
+  xenonshelf:
+    # The ready image; `docker compose up -d --build` builds it from this folder instead.
+    image: ghcr.io/k4rm4work/xenonshelf:latest
+    build: .
+    container_name: xenonshelf
+    restart: unless-stopped
+    ports:
+      - '8360:3000'
+    # IGDB_CLIENT_ID / IGDB_CLIENT_SECRET; optional, without them search is off.
+    env_file:
+      - path: .env.local
+        required: false
+    volumes:
+      # Your library lives here on the server; back this folder up.
+      - ./library-data:/data

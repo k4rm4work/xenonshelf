@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "games": [
+    {
+      "id": "e2e-halo-3",
+      "title": "Halo 3",
+      "releaseYear": 2007,
+      "genres": ["shooter"],
+      "list": "owned",
+      "format": "physical",
+      "playStatus": "completed",
+      "myRating": 9,
+      "coop": true,
+      "tags": ["party"],
+      "addedAt": "2024-01-10"
+    },
+    {
+      "id": "e2e-mass-effect",
+      "title": "Mass Effect",
+      "releaseYear": 2007,
+      "genres": ["rpg"],
+      "list": "owned",
+      "format": "physical",
+      "playStatus": "playing",
+      "addedAt": "2024-02-03"
+    },
+    {
+      "id": "e2e-limbo",
+      "title": "Limbo",
+      "releaseYear": 2010,
+      "genres": ["platform"],
+      "list": "owned",
+      "format": "digital",
+      "playStatus": "unplayed",
+      "addedAt": "2024-03-15"
+    },
+    {
+      "id": "e2e-alan-wake",
+      "title": "Alan Wake",
+      "releaseYear": 2010,
+      "list": "wishlist",
+      "priority": "high",
+      "addedAt": "2024-04-20"
+    }
+  ]
+}

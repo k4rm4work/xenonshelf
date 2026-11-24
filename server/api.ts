@@ -182,6 +182,10 @@ export function createApiHandler({ dataFile, env, backupDir, now = () => new Dat
     if (url.pathname.startsWith('/api/igdb/') && !allowIgdbRequest(req, res)) return true;
 
     if (url.pathname === '/api/igdb/search') {
+      if (req.method !== 'GET') {
+        sendJson(res, 405, { error: 'method' });
+        return true;
+      }
       const q = url.searchParams.get('q')?.trim();
       if (!q) {
         sendJson(res, 400, { error: 'invalid' });
@@ -196,6 +200,10 @@ export function createApiHandler({ dataFile, env, backupDir, now = () => new Dat
     }
 
     if (url.pathname === '/api/igdb/game') {
+      if (req.method !== 'GET') {
+        sendJson(res, 405, { error: 'method' });
+        return true;
+      }
       const id = Number(url.searchParams.get('id'));
       if (!Number.isInteger(id) || id <= 0) {
         sendJson(res, 400, { error: 'invalid' });
@@ -211,6 +219,10 @@ export function createApiHandler({ dataFile, env, backupDir, now = () => new Dat
 
     // Details for many games at once, for an import: { details: { [igdbId]: IgdbDetails } }.
     if (url.pathname === '/api/igdb/games') {
+      if (req.method !== 'GET') {
+        sendJson(res, 405, { error: 'method' });
+        return true;
+      }
       const ids = (url.searchParams.get('ids') ?? '').split(',').map(Number);
       if (!ids.length || ids.length > MAX_BATCH_IDS || !ids.every((id) => Number.isInteger(id) && id > 0)) {
         sendJson(res, 400, { error: 'invalid' });

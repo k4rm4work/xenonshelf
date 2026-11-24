@@ -78,6 +78,25 @@ function StepButton({ side, label, onClick }: { side: 'prev' | 'next'; label: st
   );
 }
 
+/** The title as typed into a shop or a search engine: the platform keeps out other consoles' editions. */
+const searchTitle = (title: string) => (/xbox\s*360/i.test(title) ? title : `${title} Xbox 360`);
+
+/** The Clipboard API exists only on https or localhost; a home server on plain http falls back to execCommand. */
+async function copyText(text: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    const field = Object.assign(document.createElement('textarea'), { value: text, readOnly: true });
+    field.style.cssText = 'position:fixed;opacity:0';
+    document.body.append(field);
+    field.select();
+    const copied = document.execCommand('copy');
+    field.remove();
+    return copied;
+  }
+}
+
 function Details({ game }: { game: Game }) {
   const { updateGame, removeGame } = useStore();
   const close = useDialogClose();
@@ -108,7 +127,18 @@ function Details({ game }: { game: Game }) {
       <div className="flex min-w-0 flex-col">
         <header className="pr-10">
           <div className="field-label text-x360-dark!">{t(isOwned ? 'game.inCollection' : 'game.onWishlist')}</div>
-          <h2 className="text-3xl leading-tight font-light tracking-tight text-slate-800 sm:text-[40px]">{game.title}</h2>
+          <h2 className="text-3xl leading-tight font-light tracking-tight text-slate-800 sm:text-[40px]">
+            <button
+              type="button"
+              data-tip={t('game.copyTitle')}
+              onClick={async () => {
+                if (await copyText(searchTitle(game.title))) toast({ kicker: t('toast.titleCopied'), title: game.title });
+              }}
+              className="cursor-copy rounded-md text-left transition-colors hover:text-slate-950 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-x360"
+            >
+              {game.title}
+            </button>
+          </h2>
           {meta.length > 0 && (
             <div className="mt-2 flex flex-wrap items-center gap-x-2 text-[15px] text-slate-500">
               {meta.map((m, i) => (

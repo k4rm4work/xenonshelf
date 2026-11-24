@@ -19,18 +19,18 @@ type Props = { list: GameList };
 export type Layout = 'cases' | 'covers' | 'list';
 
 // View preferences are a per-browser convenience; storage may be unavailable.
-function loadPref<T>(key: string, fallback: T): T {
+function loadPref<T>(key: string, fallback: T, storage = () => localStorage): T {
   try {
-    const raw = localStorage.getItem(key);
+    const raw = storage().getItem(key);
     return raw ? { ...fallback, ...JSON.parse(raw) } : fallback;
   } catch {
     return fallback;
   }
 }
 
-function savePref(key: string, value: unknown) {
+function savePref(key: string, value: unknown, storage = () => localStorage) {
   try {
-    localStorage.setItem(key, JSON.stringify(value));
+    storage().setItem(key, JSON.stringify(value));
   } catch {
     /* ignore */
   }
@@ -49,10 +49,13 @@ export function LibraryPage({ list }: Props) {
       layout: 'cases' as Layout,
     }),
   );
-  // A row of the stats on the other list opens this one already filtered.
+  // A row of the stats on the other list opens this one already filtered. Otherwise the
+  // filters last used on this list come back, but only for this tab's session: kept for good,
+  // a forgotten filter would one day look like games missing from the shelf.
   const location = useLocation();
+  const filtersKey = `x360lib:filters:${list}`;
   const [filters, setFilters] = useState<Omit<GameQuery, 'list' | 'sort' | 'direction'>>(
-    () => (location.state as { filters?: StatsFilter } | null)?.filters ?? {},
+    () => (location.state as { filters?: StatsFilter } | null)?.filters ?? loadPref(filtersKey, {}, () => sessionStorage),
   );
   // Taken once: the browser keeps history state across a reload, which would bring the
   // filter back every time the page is refreshed.
@@ -64,6 +67,11 @@ export function LibraryPage({ list }: Props) {
   const [adding, setAdding] = useState(false);
 
   useEffect(() => savePref(prefKey, view), [prefKey, view]);
+  // A search is a one-off look for a game, not part of how the list is set up.
+  useEffect(() => {
+    const { search: _search, ...kept } = filters;
+    savePref(filtersKey, kept, () => sessionStorage);
+  }, [filtersKey, filters]);
 
   const searchRef = useRef<HTMLInputElement>(null);
   const dialogOpen = adding || openId !== null;

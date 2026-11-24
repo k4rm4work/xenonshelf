@@ -38,7 +38,7 @@ jobs:
           curl -fs http://localhost:3000/api/health && test -f ci-data/games.json || { docker logs xs; exit 1; }
 
   # Every change on main that passes ships as a ready image, so a server needs no git and
-  # no build: docker compose pulls ghcr.io/k4rm4work/xenonshelf. Both common processors:
+  # no build: docker compose pulls ghcr.io/xenonshelf/xenonshelf. Both common processors:
   # PCs and most NAS boxes (amd64), Raspberry Pi and ARM NAS boxes (arm64).
   publish:
     needs: verify

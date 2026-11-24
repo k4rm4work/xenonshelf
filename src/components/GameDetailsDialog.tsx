@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { coverSrc } from '../lib/cover';
-import { markAsOwned, toggleOrdered, withCopy } from '../lib/games';
+import { markAsOwned, onList, toggleOrdered, withCopy, type GameQuery } from '../lib/games';
 import { useI18n } from '../lib/i18n';
 import { CAN_EDIT, useStore } from '../lib/store';
 import { useToast } from '../lib/toast';
@@ -19,14 +19,20 @@ type Props = {
   /** Open the neighbouring game in the list; absent at either end. */
   onPrev?: () => void;
   onNext?: () => void;
+  /** Open another game in its place, e.g. one from the same series. */
+  onOpen: (game: Game) => void;
+  /** Close the game and show the list filtered by one of its facts. */
+  onFilter: (filter: FactFilter) => void;
 };
+
+type FactFilter = Pick<GameQuery, 'year' | 'genre'>;
 
 /** Arrow keys belong to whatever is focused when it uses them itself: text, radio groups, menus. */
 const ownsArrowKeys = (target: EventTarget | null) =>
   target instanceof Element &&
   !!target.closest('input, textarea, select, [role=radiogroup], [role=listbox], [role=menu], [aria-expanded=true]');
 
-export function GameDetailsDialog({ game, onClose, onPrev, onNext }: Props) {
+export function GameDetailsDialog({ game, onClose, onPrev, onNext, onOpen, onFilter }: Props) {
   const { t } = useI18n();
 
   useEffect(() => {
@@ -52,7 +58,7 @@ export function GameDetailsDialog({ game, onClose, onPrev, onNext }: Props) {
       }
     >
       {/* Keyed so a draft note or a pending delete never carries over to the next game. */}
-      <Details key={game.id} game={game} />
+      <Details key={game.id} game={game} onOpen={onOpen} onFilter={onFilter} />
     </Dialog>
   );
 }
@@ -127,7 +133,38 @@ function CopyTitle({ title }: { title: string }) {
   );
 }
 
-function Details({ game }: { game: Game }) {
+/** The other games of the series in the collection, oldest first; a case opens that game. */
+function SeriesShelf({ game, onOpen }: { game: Game; onOpen: (game: Game) => void }) {
+  const { games } = useStore();
+  const { t } = useI18n();
+  const series = game.series ?? [];
+  const others = games
+    .filter((g) => g.id !== game.id && onList(g, 'owned') && g.series?.some((s) => series.includes(s)))
+    .sort((a, b) => (a.releaseYear ?? 9999) - (b.releaseYear ?? 9999) || a.title.localeCompare(b.title));
+  if (!others.length) return null;
+
+  return (
+    <section className="mt-6">
+      <div className="field-label">{t('game.sameSeries', { series: series[0] })}</div>
+      <div className="mt-3 flex flex-wrap gap-3">
+        {others.map((g) => (
+          <button
+            key={g.id}
+            type="button"
+            onClick={() => onOpen(g)}
+            aria-label={g.title}
+            data-tip={[g.title, g.releaseYear].filter(Boolean).join(' · ')}
+            className="w-16 cursor-pointer rounded-sm transition hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-x360 sm:w-20"
+          >
+            <GameBox game={g} flat />
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function Details({ game, onOpen, onFilter }: Pick<Props, 'game' | 'onOpen' | 'onFilter'>) {
   const { updateGame, removeGame } = useStore();
   const close = useDialogClose();
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -140,7 +177,13 @@ function Details({ game }: { game: Game }) {
   const isOwned = game.list === 'owned';
   // On the wishlist: a wish, or a game owned whose case is still hunted for.
   const wished = !isOwned || !!game.wanted;
-  const meta = [game.releaseYear, ...(game.genres ?? []).map(genre)].filter(Boolean);
+  // Each fact under the title shows the list filtered by it.
+  const meta: { label: string; tip: string; filter: FactFilter }[] = [
+    ...(game.releaseYear
+      ? [{ label: String(game.releaseYear), tip: t('game.filterYear', { year: game.releaseYear }), filter: { year: game.releaseYear } }]
+      : []),
+    ...(game.genres ?? []).map((g) => ({ label: genre(g), tip: t('game.filterGenre', { genre: genre(g) }), filter: { genre: g } })),
+  ];
 
   return (
     <div className="gloss relative grid gap-x-10 gap-y-6 rounded-3xl p-6 sm:grid-cols-[240px_1fr] sm:p-9">
@@ -163,9 +206,19 @@ function Details({ game }: { game: Game }) {
           {meta.length > 0 && (
             <div className="mt-2 flex flex-wrap items-center gap-x-2 text-[15px] text-slate-500">
               {meta.map((m, i) => (
-                <span key={m} className="flex items-center gap-2">
+                <span key={m.label} className="flex items-center gap-2">
                   {i > 0 && <span className="text-slate-300">·</span>}
-                  {m}
+                  <button
+                    type="button"
+                    data-tip={m.tip}
+                    onClick={async () => {
+                      await close();
+                      onFilter(m.filter);
+                    }}
+                    className="cursor-pointer rounded-sm transition-colors hover:text-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-x360"
+                  >
+                    {m.label}
+                  </button>
                 </span>
               ))}
             </div>
@@ -187,7 +240,7 @@ function Details({ game }: { game: Game }) {
         )}
 
         <div className="mt-7">
-          <CopySheet game={game} onChange={update} disabled={!CAN_EDIT} />
+          <CopySheet game={game} onChange={update} disabled={!CAN_EDIT} aboutGame={<SeriesShelf game={game} onOpen={onOpen} />} />
         </div>
 
         <footer className="mt-auto flex flex-wrap items-center gap-3 pt-8">

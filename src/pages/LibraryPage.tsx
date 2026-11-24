@@ -188,6 +188,12 @@ export function LibraryPage({ list }: Props) {
           onClose={() => setOpenId(null)}
           onPrev={prevGame && (() => setOpenId(prevGame.id))}
           onNext={nextGame && (() => setOpenId(nextGame.id))}
+          onOpen={openGame}
+          // The fact alone, so the shelf shows every game sharing it, from the top.
+          onFilter={(filter) => {
+            setFilters(filter);
+            window.scrollTo({ top: 0 });
+          }}
         />
       )}
       {adding && <AddGameDialog defaultList={list} onClose={() => setAdding(false)} />}

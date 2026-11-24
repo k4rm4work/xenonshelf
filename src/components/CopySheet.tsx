@@ -30,6 +30,8 @@ type Props = {
   game: Game;
   onChange: (patch: Partial<Game>) => void;
   disabled?: boolean;
+  /** Shown under the game's own rows, on its tab only. */
+  aboutGame?: ReactNode;
 };
 
 /** Menu options from a picker's labels, each with its icon. */
@@ -274,7 +276,7 @@ export function LoanNotice({ game, onChange, disabled }: Props) {
     tabs: the game, and what of it is owned (its cases and its download), where only the
     details noted show and the rest wait in an "add a detail" menu, so a plain copy stays a
     line or two. */
-export function CopySheet({ game, onChange, disabled }: Props) {
+export function CopySheet({ game, onChange, disabled, aboutGame }: Props) {
   const { t } = useI18n();
   const owned = game.list === 'owned';
   const held = copiesOf(game).length + (owned && game.digital ? 1 : 0);
@@ -328,28 +330,31 @@ export function CopySheet({ game, onChange, disabled }: Props) {
         {showing === 'history' ? (
           <GameHistory game={game} />
         ) : showing === 'game' ? (
-          <Sheet rows={rows}>
-            {owned && (
+          <>
+            <Sheet rows={rows}>
+              {owned && (
+                <TextRow
+                  key={`review-${game.id}`}
+                  label={t('rating.review')}
+                  value={game.review}
+                  prompt={t('rating.addReview')}
+                  placeholder={t('rating.reviewPlaceholder')}
+                  onChange={(review) => onChange({ review })}
+                  disabled={disabled}
+                />
+              )}
               <TextRow
-                key={`review-${game.id}`}
-                label={t('rating.review')}
-                value={game.review}
-                prompt={t('rating.addReview')}
-                placeholder={t('rating.reviewPlaceholder')}
-                onChange={(review) => onChange({ review })}
+                key={`notes-${game.id}`}
+                label={t('game.notes')}
+                value={game.notes}
+                prompt={t('copy.addNote')}
+                placeholder={t('game.notesPlaceholder')}
+                onChange={(notes) => onChange({ notes })}
                 disabled={disabled}
               />
-            )}
-            <TextRow
-              key={`notes-${game.id}`}
-              label={t('game.notes')}
-              value={game.notes}
-              prompt={t('copy.addNote')}
-              placeholder={t('game.notesPlaceholder')}
-              onChange={(notes) => onChange({ notes })}
-              disabled={disabled}
-            />
-          </Sheet>
+            </Sheet>
+            {aboutGame}
+          </>
         ) : (
           <CopiesPanel game={game} onChange={onChange} disabled={disabled} />
         )}
